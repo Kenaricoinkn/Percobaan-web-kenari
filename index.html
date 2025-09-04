@@ -47,6 +47,12 @@
         <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400">Contact</a>
         <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400">FAQ</a>
       </div>
+      <!-- Switcher -->
+<select id="networkSwitcher" onchange="switchNetwork(this.value)" 
+  class="ml-4 px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
+  <option value="mainnet">Mainnet</option>
+  <option value="testnet">Testnet</option>
+</select>
       <button id="connectBtn" onclick="openModal()" class="px-4 py-2 bg-yellow-500 text-black rounded-xl font-semibold hover:bg-yellow-400 shadow glow-hover">
         Connect Wallet
       </button>
@@ -220,10 +226,37 @@
     // ----------------------------
     // Blockchain constants
     // ----------------------------
-    const BSC_CHAIN_ID = "0x38"; // BSC Mainnet (sesuai kode yang kamu kirim)
-    const KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";       // Token KN kamu
-    const STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5";        // GANTI dengan alamat StakingReward
-    const FAUCET_CONTRACT  = "0x261b3d34833C1Fc3253A036E8271528439f3310d";         // GANTI dengan alamat Faucet
+    // ----------------------------
+// Blockchain constants (default mainnet)
+// ----------------------------
+let KN = "0x1390f63AF92448c46368443496a2bfc1469558de";   // token mainnet
+let STAKING_CONTRACT = "0xYourStakingMainnet";          // ganti sendiri
+let FAUCET_CONTRACT  = "0xYourFaucetMainnet";           // ganti sendiri
+let BSC_CHAIN_ID = "0x38"; // Mainnet
+
+function switchNetwork(mode) {
+  if (mode === "testnet") {
+    KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";   // token testnet
+    STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5";           // ganti sendiri
+    FAUCET_CONTRACT  = "0x261b3d34833C1Fc3253A036E8271528439f3310d";            // ganti sendiri
+    BSC_CHAIN_ID = "0x61"; // BSC Testnet
+  } else {
+    KN = "0x1390f63AF92448c46368443496a2bfc1469558de";   // token mainnet
+    STAKING_CONTRACT = "0xYourStakingMainnet";           // ganti sendiri
+    FAUCET_CONTRACT  = "0xYourFaucetMainnet";            // ganti sendiri
+    BSC_CHAIN_ID = "0x38"; // Mainnet
+  }
+
+  // update tampilan di home
+  document.getElementById("contractAddr").innerText = KN;
+
+  // refresh balance kalau wallet udah connect
+  if (userAddress) {
+    updateBalances();
+    updateStaked();
+    updateReward();
+  }
+}
 
     const ERC20_ABI = [
       "function balanceOf(address) view returns (uint256)",
