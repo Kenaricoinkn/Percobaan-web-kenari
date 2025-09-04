@@ -34,10 +34,12 @@
   <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
     
     <!-- Kiri: Logo + Nama -->
-    <div class="flex items-center space-x-2">
-      <button id="menuBtn" class="md:hidden mr-2 p-2 rounded hover:bg-gray-700" aria-label="Open menu" onclick="toggleMenu()">
-        ☰
-      </button>
+    <button id="menuBtn" 
+        class="md:hidden mr-2 p-2 rounded hover:bg-gray-700" 
+        aria-label="Open menu" 
+        onclick="toggleMenu()">
+  ☰
+</button>
       <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
       <span class="font-bold text-lg text-yellow-400">KenariCoin</span>
     </div>
@@ -68,14 +70,14 @@
   </div>
 
   <!-- Mobile menu (toggle ☰) -->
-  <div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
-    <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
-    <a href="#" onclick="navigate('wallet'); toggleMenu(false)" class="block hover:text-yellow-400">Wallet</a>
-    <a href="#" onclick="navigate('staking'); toggleMenu(false)" class="block hover:text-yellow-400">Staking</a>
-    <a href="#" onclick="navigate('about'); toggleMenu(false)" class="block hover:text-yellow-400">About</a>
-    <a href="#" onclick="navigate('contact'); toggleMenu(false)" class="block hover:text-yellow-400">Contact</a>
-    <a href="#" onclick="navigate('faq'); toggleMenu(false)" class="block hover:text-yellow-400">FAQ</a>
-  </div>
+<div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
+  <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
+  <a href="#" onclick="navigate('wallet'); toggleMenu(false)" class="block hover:text-yellow-400">Wallet</a>
+  <a href="#" onclick="navigate('staking'); toggleMenu(false)" class="block hover:text-yellow-400">Staking</a>
+  <a href="#" onclick="navigate('about'); toggleMenu(false)" class="block hover:text-yellow-400">About</a>
+  <a href="#" onclick="navigate('contact'); toggleMenu(false)" class="block hover:text-yellow-400">Contact</a>
+  <a href="#" onclick="navigate('faq'); toggleMenu(false)" class="block hover:text-yellow-400">FAQ</a>
+</div>
 </nav>
 
   <!-- Pages -->
@@ -216,14 +218,15 @@
       if (pageId) history.replaceState(null, "", "#" + pageId);
     }
     function toggleMenu(force) {
-      const mm = document.getElementById("mobileMenu");
-      if (!mm) return;
-      if (typeof force === "boolean") {
-        mm.classList.toggle("hidden", !force ? true : false);
-        return;
-      }
-      mm.classList.toggle("hidden");
-    }
+  const menu = document.getElementById("mobileMenu");
+  if (!menu) return;
+
+  if (typeof force === "boolean") {
+    menu.classList.toggle("hidden", !force ? true : false);
+  } else {
+    menu.classList.toggle("hidden");
+  }
+}
     function openModal(){ document.getElementById("walletModal").classList.remove("hidden"); }
     function closeModal(){ document.getElementById("walletModal").classList.add("hidden"); }
     function copyContract(){
