@@ -462,7 +462,14 @@ async function claimFaucet(){
     await updateBalances();
   } catch(err){
     console.error('claimFaucet error', err);
-    alert('❌ Gagal claim faucet: ' + (err?.data?.message || err.message || err));
+    let msg = err?.data?.message || err?.error?.message || err.message || "Gagal claim faucet";
+
+    // kalau error dari kontrak ada kata "cooldown"
+    if(msg.toLowerCase().includes("cooldown")) {
+      alert("⏳ Kamu sudah klaim faucet. Silakan tunggu sampai cooldown selesai.");
+    } else {
+      alert("❌ " + msg);
+    }
   }
 }
 
