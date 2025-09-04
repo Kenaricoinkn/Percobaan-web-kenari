@@ -81,17 +81,121 @@ async function updateBalances(){
 }
 
 // ----------------------------
-// Staking (dummy)
+// Kontrak Address
 // ----------------------------
-let totalStaked = 0;
-function doStake() {
+const KN = "0x1390f63AF92448c46368443496a2bfc1469558de"; // token KN
+const STAKING_CONTRACT = "0xYourStakingContractAddress"; // ganti dengan kontrak staking
+const FAUCET_CONTRACT = "0xYourFaucetContractAddress";   // ganti dengan kontrak faucet
+
+// ABI Token (BEP20)
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function approve(address spender, uint256 amount) returns (bool)"
+];
+
+// ABI Staking Contract
+const STAKING_ABI = [
+  "function stake(uint256 amount) external",
+  "function withdraw(uint256 amount) external",
+  "function stakedBalance(address user) view returns (uint256)"
+];
+
+// ABI Faucet
+const FAUCET_ABI = [
+  "function faucet() external"
+];
+
+// ----------------------------
+// Staking Function (real)
+// ----------------------------
+async function doStake() {
+  if (!signer) return alert("Hubungkan wallet dulu!");
   const amount = parseFloat(document.getElementById("stakeAmount").value);
   if (isNaN(amount) || amount <= 0) return alert("Masukkan jumlah KN valid.");
-  totalStaked += amount;
-  document.getElementById("totalStaked").innerText = totalStaked.toFixed(2) + " KN";
-  document.getElementById("stakeAmount").value = "";
-  alert("✅ Berhasil staking " + amount + " KN!");
+
+  try {
+    const token = new ethers.Contract(KN, ERC20_ABI, signer);
+    const decimals = await token.decimals();
+    const parsed = ethers.utils.parseUnits(amount.toString(), decimals);
+
+    // 1. Approve token
+    let tx = await token.approve(STAKING_CONTRACT, parsed);
+    await tx.wait();
+
+    // 2. Stake ke contract
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
+    tx = await staking.stake(parsed);
+    await tx.wait();
+
+    alert(`✅ Berhasil staking ${amount} KN!`);
+    document.getElementById("stakeAmount").value = "";
+
+    await updateBalances();
+    await updateStaked();
+  } catch (err) {
+    alert("❌ Gagal staking: " + err.message);
+  }
 }
+
+// ----------------------------
+// Withdraw Staking
+// ----------------------------
+async function doWithdraw() {
+  if (!signer) return alert("Hubungkan wallet dulu!");
+  const amount = prompt("Masukkan jumlah KN untuk withdraw:");
+  if (!amount) return;
+
+  try {
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
+    const token = new ethers.Contract(KN, ERC20_ABI, signer);
+    const decimals = await token.decimals();
+    const parsed = ethers.utils.parseUnits(amount.toString(), decimals);
+
+    const tx = await staking.withdraw(parsed);
+    await tx.wait();
+
+    alert(`✅ Berhasil withdraw ${amount} KN!`);
+    await updateBalances();
+    await updateStaked();
+  } catch (err) {
+    alert("❌ Gagal withdraw: " + err.message);
+  }
+}
+
+// ----------------------------
+// Update Stake Balance
+// ----------------------------
+async function updateStaked() {
+  if (!signer || !userAddress) return;
+  const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
+  const token = new ethers.Contract(KN, ERC20_ABI, provider);
+  const decimals = await token.decimals();
+
+  const bal = await staking.stakedBalance(userAddress);
+  document.getElementById("totalStaked").innerText = ethers.utils.formatUnits(bal, decimals) + " KN";
+}
+
+// ----------------------------
+// Faucet
+// ----------------------------
+async function claimFaucet() {
+  if (!signer) return alert("Hubungkan wallet dulu!");
+  try {
+    const faucet = new ethers.Contract(FAUCET_CONTRACT, FAUCET_ABI, signer);
+    const tx = await faucet.faucet();
+    await tx.wait();
+    alert("🎉 Faucet berhasil! Token KN ditambahkan ke wallet Anda.");
+    await updateBalances();
+  } catch (err) {
+    alert("❌ Gagal claim faucet: " + err.message);
+  }
+}
+
+// expose
+window.doStake = doStake;
+window.doWithdraw = doWithdraw;
+window.claimFaucet = claimFaucet;
 
 // ----------------------------
 // Expose ke window
