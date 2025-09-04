@@ -24,11 +24,33 @@ showPage("home");
 // Blockchain constants
 // ----------------------------
 const BSC_CHAIN_ID = "0x38";
-const KN = "0x1390f63AF92448c46368443496a2bfc1469558de";
+
+// Ganti sesuai alamat kontrakmu
+const KN = "0xYourTokenAddress";                // Token KN
+const STAKING_CONTRACT = "0xYourStakingAddress"; // Kontrak staking reward
+const FAUCET_CONTRACT  = "0xYourFaucetAddress";  // Kontrak faucet
+
+// ABI Token (BEP20)
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
-  "function decimals() view returns (uint8)"
+  "function decimals() view returns (uint8)",
+  "function approve(address spender, uint256 amount) returns (bool)"
 ];
+
+// ABI Staking Contract (dengan reward)
+const STAKING_ABI = [
+  "function stake(uint256 amount) external",
+  "function withdraw(uint256 amount) external",
+  "function claimReward() external",
+  "function pendingReward(address user) view returns (uint256)",
+  "function getStaked(address user) view returns (uint256)"
+];
+
+// ABI Faucet
+const FAUCET_ABI = [
+  "function faucet() external"
+];
+
 let provider, signer, userAddress;
 
 function fromWei(bn, decimals){ return ethers.utils.formatUnits(bn, decimals); }
@@ -51,6 +73,8 @@ async function connectMetaMask(){
     userAddress = await signer.getAddress();
     document.getElementById("connectBtn").innerText = userAddress.substring(0,6) + "..." + userAddress.slice(-4);
     await updateBalances();
+    await updateStaked();
+    await updateReward();
     closeModal();
   } catch(err){ alert("Gagal connect: " + err.message); }
 }
@@ -64,6 +88,8 @@ async function connectOKX(){
     userAddress = await signer.getAddress();
     document.getElementById("connectBtn").innerText = userAddress.substring(0,6) + "..." + userAddress.slice(-4);
     await updateBalances();
+    await updateStaked();
+    await updateReward();
     closeModal();
   } catch(err){ alert("Gagal connect: " + err.message); }
 }
@@ -76,35 +102,10 @@ async function updateBalances(){
   document.getElementById("bnbBalance").innerText = (+fromWei(bnbBal, 18)).toFixed(4) + " BNB";
   const token = new ethers.Contract(KN, ERC20_ABI, provider);
   const raw = await token.balanceOf(userAddress);
-  const kn = fromWei(raw, 6);
+  const decimals = await token.decimals();
+  const kn = fromWei(raw, decimals);
   document.getElementById("tokenBalance").innerText = (+kn).toFixed(2) + " KN";
 }
-
-// ----------------------------
-// Kontrak Address
-// ----------------------------
-const KN = "0x1390f63AF92448c46368443496a2bfc1469558de"; // token KN
-const STAKING_CONTRACT = "0xYourStakingContractAddress"; // ganti dengan kontrak staking
-const FAUCET_CONTRACT = "0xYourFaucetContractAddress";   // ganti dengan kontrak faucet
-
-// ABI Token (BEP20)
-const ERC20_ABI = [
-  "function balanceOf(address) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function approve(address spender, uint256 amount) returns (bool)"
-];
-
-// ABI Staking Contract
-const STAKING_ABI = [
-  "function stake(uint256 amount) external",
-  "function withdraw(uint256 amount) external",
-  "function stakedBalance(address user) view returns (uint256)"
-];
-
-// ABI Faucet
-const FAUCET_ABI = [
-  "function faucet() external"
-];
 
 // ----------------------------
 // Staking Function (real)
@@ -133,6 +134,7 @@ async function doStake() {
 
     await updateBalances();
     await updateStaked();
+    await updateReward();
   } catch (err) {
     alert("❌ Gagal staking: " + err.message);
   }
@@ -158,13 +160,32 @@ async function doWithdraw() {
     alert(`✅ Berhasil withdraw ${amount} KN!`);
     await updateBalances();
     await updateStaked();
+    await updateReward();
   } catch (err) {
     alert("❌ Gagal withdraw: " + err.message);
   }
 }
 
 // ----------------------------
-// Update Stake Balance
+// Claim Reward
+// ----------------------------
+async function claimReward() {
+  if (!signer) return alert("Hubungkan wallet dulu!");
+  try {
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
+    const tx = await staking.claimReward();
+    await tx.wait();
+    alert("🎉 Reward berhasil diclaim!");
+    await updateBalances();
+    await updateStaked();
+    await updateReward();
+  } catch (err) {
+    alert("❌ Claim gagal: " + err.message);
+  }
+}
+
+// ----------------------------
+// Update Stake & Reward Balance
 // ----------------------------
 async function updateStaked() {
   if (!signer || !userAddress) return;
@@ -172,8 +193,18 @@ async function updateStaked() {
   const token = new ethers.Contract(KN, ERC20_ABI, provider);
   const decimals = await token.decimals();
 
-  const bal = await staking.stakedBalance(userAddress);
+  const bal = await staking.getStaked(userAddress);
   document.getElementById("totalStaked").innerText = ethers.utils.formatUnits(bal, decimals) + " KN";
+}
+
+async function updateReward() {
+  if (!signer || !userAddress) return;
+  const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
+  const token = new ethers.Contract(KN, ERC20_ABI, provider);
+  const decimals = await token.decimals();
+
+  const reward = await staking.pendingReward(userAddress);
+  document.getElementById("pendingReward").innerText = ethers.utils.formatUnits(reward, decimals) + " KN";
 }
 
 // ----------------------------
@@ -192,11 +223,6 @@ async function claimFaucet() {
   }
 }
 
-// expose
-window.doStake = doStake;
-window.doWithdraw = doWithdraw;
-window.claimFaucet = claimFaucet;
-
 // ----------------------------
 // Expose ke window
 // ----------------------------
@@ -206,3 +232,6 @@ window.navigate = navigate;
 window.selectWallet = selectWallet;
 window.copyContract = copyContract;
 window.doStake = doStake;
+window.doWithdraw = doWithdraw;
+window.claimFaucet = claimFaucet;
+window.claimReward = claimReward;
