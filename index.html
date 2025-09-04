@@ -30,31 +30,42 @@
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
 
   <!-- Navbar -->
-  <nav class="bg-gray-800 shadow fixed w-full z-20 top-0 border-b border-gray-700">
-    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
-      <div class="flex items-center space-x-2">
-        <button id="menuBtn" class="md:hidden mr-2 p-2 rounded hover:bg-gray-700" aria-label="Open menu" onclick="toggleMenu()">
-          ☰
-        </button>
-        <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
-        <span class="font-bold text-lg text-yellow-400">KenariCoin</span>
-      </div>
-<div class="hidden md:flex space-x-6">
-  <a href="#" onclick="navigate('home')" class="hover:text-yellow-400">Home</a>
-  <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400">Wallet</a>
-  <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400">Staking</a>
-  <a href="#" onclick="navigate('about')" class="hover:text-yellow-400">About</a>
-  <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400">Contact</a>
-  <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400">FAQ</a>
-</div>
+<nav class="bg-gray-800 shadow fixed w-full z-20 top-0 border-b border-gray-700">
+  <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+    <!-- Kiri: Logo + Nama -->
+    <div class="flex items-center space-x-2">
+      <button id="menuBtn" class="md:hidden mr-2 p-2 rounded hover:bg-gray-700" aria-label="Open menu" onclick="toggleMenu()">
+        ☰
+      </button>
+      <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
+      <span class="font-bold text-lg text-yellow-400">KenariCoin</span>
+    </div>
 
-<div class="flex items-center space-x-2">
-  <!-- Switcher -->
-  <select id="networkSwitcher" onchange="switchNetwork(this.value)" 
-    class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
-    <option value="mainnet">Mainnet</option>
-    <option value="testnet">Testnet</option>
-  </select>
+    <!-- Tengah: Link navigasi -->
+    <div id="navLinks" class="hidden md:flex space-x-6">
+      <a href="#" onclick="navigate('home')" class="hover:text-yellow-400">Home</a>
+      <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400">Wallet</a>
+      <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400">Staking</a>
+      <a href="#" onclick="navigate('about')" class="hover:text-yellow-400">About</a>
+      <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400">Contact</a>
+      <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400">FAQ</a>
+    </div>
+
+    <!-- Kanan: Switcher + Connect Wallet -->
+    <div class="flex items-center space-x-2">
+      <select id="networkSwitcher" onchange="switchNetwork(this.value)" 
+        class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
+        <option value="mainnet">Mainnet</option>
+        <option value="testnet">Testnet</option>
+      </select>
+
+      <button id="connectBtn" onclick="openModal()" 
+        class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm">
+        Connect
+      </button>
+    </div>
+  </div>
+</nav>
 
   <!-- Connect Wallet -->
   <button id="connectBtn" onclick="openModal()" 
