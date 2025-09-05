@@ -615,7 +615,6 @@ if(window.ethereum){
   window.ethereum.on('chainChanged', () => { setTimeout(()=>location.reload(), 200); });
 }
 // ========================
-<script>
 // ========================
 // Multi-language Support
 // ========================
@@ -668,28 +667,6 @@ const translations = {
   }
 };
 
-// ========================
-// Language Switcher
-// ========================
-function switchLang(lang) {
-  localStorage.setItem("lang", lang);
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.getAttribute("data-i18n");
-    if (translations[lang] && translations[lang][key]) {
-      el.textContent = translations[lang][key];
-    }
-  });
-}
-
-// ========================
-// Load Saved Language
-// ========================
-document.addEventListener("DOMContentLoaded", () => {
-  const savedLang = localStorage.getItem("lang") || "id";
-  document.getElementById("langSwitcher").value = savedLang;
-  switchLang(savedLang);
-});
-</script>
 // ========================
 // Language Switcher
 // ========================
