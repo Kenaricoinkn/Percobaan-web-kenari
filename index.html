@@ -152,42 +152,58 @@ const STAKING_ABI=[
   "function getStaked(address user) view returns (uint256)"
 ];
 const FAUCET_ABI=["function faucet() external"];
-let provider=null, signer=null, userAddress=null;
+let provider = null, signer = null, userAddress = null;
 
-/* ===================== Wallet Connect/Disconnect ===================== */
-async function connectWallet(){
-  if(!window.ethereum){showToast('MetaMask / wallet tidak ditemukan','error');return;}
-  try{
+// Fungsi connect
+async function connectWallet() {
+  if (!window.ethereum) {
+    return showToast("❌ MetaMask tidak ditemukan.", "error");
+  }
+  try {
     await ensureWalletOnSelectedChain();
-    provider=new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send('eth_requestAccounts',[]);
-    signer=provider.getSigner();
-    userAddress=await signer.getAddress();
-    localStorage.setItem('kenari_connected','1');
-    updateConnectBtn(true);
-    await refreshDashboard();
-    showToast('🔗 Wallet connected','success');
-  }catch(e){console.error(e); showToast('❌ Gagal connect: '+(e?.message||e),'error');}
-}
-function disconnectWallet(){
-  provider=null; signer=null; userAddress=null;
-  localStorage.removeItem('kenari_connected');
-  updateConnectBtn(false);
-  showToast('🔌 Disconnected','warning');
-}
-function toggleWallet(){ if(userAddress){disconnectWallet();} else {connectWallet();} }
-function updateConnectBtn(connected){
-  const btn=document.getElementById('connectBtn');
-  if(connected){
-    btn.innerText='Disconnect';
-    btn.classList.remove('bg-yellow-500','hover:bg-yellow-400','text-black');
-    btn.classList.add('bg-red-600','hover:bg-red-500','text-white');
-  }else{
-    btn.innerText='Connect';
-    btn.classList.remove('bg-red-600','hover:bg-red-500','text-white');
-    btn.classList.add('bg-yellow-500','hover:bg-yellow-400','text-black');
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    // Update tombol jadi Disconnect
+    const btn = document.getElementById("connectBtn");
+    btn.innerText = "Disconnect";
+    btn.classList.remove("bg-yellow-500", "text-black");
+    btn.classList.add("bg-red-600", "text-white", "hover:bg-red-500");
+    btn.onclick = disconnectWallet;
+
+    showToast("✅ Wallet connected: " + userAddress, "success");
+    await updateBalances();
+  } catch (err) {
+    showToast("❌ Gagal connect: " + (err.message || err), "error");
   }
 }
+
+// Fungsi disconnect
+function disconnectWallet() {
+  provider = null;
+  signer = null;
+  userAddress = null;
+
+  const btn = document.getElementById("connectBtn");
+  btn.innerText = "Connect";
+  btn.classList.remove("bg-red-600", "text-white", "hover:bg-red-500");
+  btn.classList.add("bg-yellow-500", "text-black", "hover:bg-yellow-400");
+  btn.onclick = connectWallet;
+
+  showToast("ℹ️ Wallet disconnected", "info");
+}
+
+// Auto reconnect kalau sebelumnya sudah connect
+window.addEventListener("DOMContentLoaded", async () => {
+  if (window.ethereum) {
+    const accounts = await window.ethereum.request({ method: "eth_accounts" });
+    if (accounts.length > 0) {
+      connectWallet();
+    }
+  }
+});
 
 /* ===================== Network Switch ===================== */
 function switchNetwork(mode){
