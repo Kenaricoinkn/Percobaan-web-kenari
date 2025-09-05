@@ -470,6 +470,7 @@ async function updateReward(){
 }
 
 async function claimFaucet(){
+async function claimFaucet(){
   const btn = document.getElementById('faucetBtn');
   if(!signer) {
     showToast('Hubungkan wallet dulu!', "warning");
@@ -489,26 +490,29 @@ async function claimFaucet(){
 
     showToast('🎉 Faucet berhasil! Token KN ditambahkan ke wallet Anda.', "success");
     await updateBalances();
-} catch(err){
-  console.error('claimFaucet error', err);
+  } catch(err){
+    console.error('claimFaucet error', err);
 
-  let msg = err?.data?.message || err?.error?.message || err?.reason || err.message || "Gagal claim faucet";
+    let msg = err?.data?.message || err?.error?.message || err?.reason || err.message || "Gagal claim faucet";
 
-  // Bersihkan pesan error
-  if(msg.toLowerCase().includes("execution reverted")) {
-    msg = msg.split("execution reverted:").pop().trim();
-  }
+    // Bersihkan pesan "execution reverted"
+    if(msg.toLowerCase().includes("execution reverted")) {
+      msg = msg.split("execution reverted:").pop().trim();
+    }
 
-  // Kalau JSON-RPC error (umum)
-  if(msg.toLowerCase().includes("internal json-rpc error")) {
-    msg = "Transaksi ditolak node RPC. Coba cek saldo faucet atau tunggu sebentar.";
-  }
+    // Tangani JSON-RPC error umum
+    if(msg.toLowerCase().includes("internal json-rpc error")) {
+      msg = "Transaksi ditolak node RPC. Coba cek saldo faucet atau tunggu sebentar.";
+    }
 
-  // Kalau cooldown / limit harian
-  if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu")) {
-    showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
-  } else {
-    showToast("❌ " + msg, "error");
+    // Tangani khusus cooldown
+    if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu")) {
+      showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
+    } else {
+      showToast("❌ " + msg, "error");
+    }
+  } finally {
+    if(btn){ btn.disabled = false; btn.innerText = 'Claim Faucet'; }
   }
 }
 
