@@ -489,21 +489,26 @@ async function claimFaucet(){
 
     showToast('🎉 Faucet berhasil! Token KN ditambahkan ke wallet Anda.', "success");
     await updateBalances();
-  } catch(err){
-    console.error('claimFaucet error', err);
-    let msg = err?.data?.message || err?.error?.message || err?.reason || err.message || "Gagal claim faucet";
+} catch(err){
+  console.error('claimFaucet error', err);
 
-    if(msg.toLowerCase().includes("execution reverted")) {
-      msg = msg.split("execution reverted:").pop().trim();
-    }
+  let msg = err?.data?.message || err?.error?.message || err?.reason || err.message || "Gagal claim faucet";
 
-    if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu")) {
-      showToast("⏳ " + msg, "warning");
-    } else {
-      showToast("❌ " + msg, "error");
-    }
-  } finally {
-    if(btn){ btn.disabled = false; btn.innerText = 'Claim Faucet'; }
+  // Bersihkan pesan error
+  if(msg.toLowerCase().includes("execution reverted")) {
+    msg = msg.split("execution reverted:").pop().trim();
+  }
+
+  // Kalau JSON-RPC error (umum)
+  if(msg.toLowerCase().includes("internal json-rpc error")) {
+    msg = "Transaksi ditolak node RPC. Coba cek saldo faucet atau tunggu sebentar.";
+  }
+
+  // Kalau cooldown / limit harian
+  if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu")) {
+    showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
+  } else {
+    showToast("❌ " + msg, "error");
   }
 }
 
