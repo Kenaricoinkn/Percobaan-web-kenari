@@ -33,13 +33,13 @@
 
   <!-- CENTER: Nav Links (desktop only) -->
   <div id="navLinks" class="hidden md:flex space-x-6">
-    <a href="#" onclick="navigate('home')" class="hover:text-yellow-400">Home</a>
-    <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400">Wallet</a>
-    <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400">Staking</a>
-    <a href="#" onclick="navigate('about')" class="hover:text-yellow-400">About</a>
-    <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400">Contact</a>
-    <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400">FAQ</a>
-  </div>
+  <a href="#" onclick="navigate('home')" class="hover:text-yellow-400" data-i18n="home">Home</a>
+  <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400" data-i18n="wallet">Wallet</a>
+  <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400" data-i18n="staking">Staking</a>
+  <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
+  <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
+  <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
+</div>
 
   <!-- RIGHT: Network + Language + Connect -->
   <div class="flex items-center gap-2 flex-shrink-0">
@@ -59,9 +59,10 @@
 
     <!-- Connect Button -->
     <button id="connectBtn" onclick="openModal()"
-      class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm">
-      Connect
-    </button>
+  class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm"
+  data-i18n="connect">
+  Connect
+</button>
   </div>
 </div>
 
@@ -575,24 +576,28 @@ if(window.ethereum){
 // ========== TRANSLATIONS ==========
 const translations = {
   id: {
+    home: "Beranda",
+    wallet: "Dompet",
+    staking: "Staking",
+    about: "Tentang",
+    contact: "Kontak",
+    faq: "FAQ",
     welcome: "Selamat Datang di KenariCoin",
     connect: "Hubungkan Wallet",
     contract: "📜 Alamat Kontrak",
-    wallet_balance: "Saldo Wallet",
-    staking: "Staking KN",
-    about: "Tentang KenariCoin",
-    contact: "Kontak",
-    faq: "Pertanyaan Umum"
+    wallet_balance: "Saldo Wallet"
   },
   en: {
+    home: "Home",
+    wallet: "Wallet",
+    staking: "Staking",
+    about: "About",
+    contact: "Contact",
+    faq: "FAQ",
     welcome: "Welcome to KenariCoin",
     connect: "Connect Wallet",
     contract: "📜 Contract Address",
-    wallet_balance: "Wallet Balance",
-    staking: "Stake KN",
-    about: "About KenariCoin",
-    contact: "Contact",
-    faq: "FAQ"
+    wallet_balance: "Wallet Balance"
   }
 };
 
@@ -606,7 +611,6 @@ function switchLang(lang){
   });
 }
 // ========== INIT ==========
-// ========== INIT ==========
 window.addEventListener('DOMContentLoaded', () => {
   try {
     document.getElementById('networkSwitcher').value = 'testnet';
@@ -617,6 +621,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedLang = localStorage.getItem("lang") || "id";
     document.getElementById("langSwitcher").value = savedLang;
     switchLang(savedLang);
+
+    // kalau dropdown berubah -> ganti bahasa
+    document.getElementById("langSwitcher").addEventListener("change", function(){
+      switchLang(this.value);
+    });
 
     const hash = location.hash?.replace('#','') || 'home';
     showPage(hash);
