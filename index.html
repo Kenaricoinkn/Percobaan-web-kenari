@@ -77,27 +77,22 @@
   </nav>
 
   <!-- PAGES -->
-  <main class="flex-grow px-4 pt-24 pb-10">
-    <!-- Home -->
-    <section id="home" class="page-section text-center active">
-      <img src="img/logo.png" alt="KenariCoin Logo" class="w-32 h-32 rounded-full mx-auto shadow-lg border border-yellow-400 glow-hover">
-      <h1 class="text-3xl font-bold mt-4 text-yellow-400" data-i18n="welcome">
-  Selamat Datang di KenariCoin
-</h1>
+<main class="flex-grow px-4 pt-24 pb-10">
+  <!-- Home -->
+  <section id="home" class="page-section text-center active">
+    <img src="img/logo.png" alt="KenariCoin Logo" class="w-32 h-32 rounded-full mx-auto shadow-lg border border-yellow-400 glow-hover">
+    <h1 class="text-3xl font-bold mt-4 text-yellow-400" data-i18n="welcome">
+      Selamat Datang di KenariCoin
+    </h1>
 
-<button id="connectBtn" onclick="openModal()"
-  class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm"
-  data-i18n="connect">
-  Connect
-</button>
-      <div class="mt-6 max-w-xl mx-auto bg-gray-800 shadow rounded-xl p-4 text-gray-300 glow-hover">
-        <h3 class="font-bold mb-2">📜 Contract Address</h3>
-        <div class="flex items-center justify-between gap-3">
-          <span id="contractAddr" class="text-sm break-all"></span>
-          <button onclick="copyContract()" class="px-3 py-1 bg-yellow-500 text-black rounded-lg text-sm hover:bg-yellow-400 glow-hover">Copy</button>
-        </div>
+    <div class="mt-6 max-w-xl mx-auto bg-gray-800 shadow rounded-xl p-4 text-gray-300 glow-hover">
+      <h3 class="font-bold mb-2">📜 Contract Address</h3>
+      <div class="flex items-center justify-between gap-3">
+        <span id="contractAddr" class="text-sm break-all"></span>
+        <button onclick="copyContract()" class="px-3 py-1 bg-yellow-500 text-black rounded-lg text-sm hover:bg-yellow-400 glow-hover">Copy</button>
       </div>
-    </section>
+    </div>
+  </section>
 
     <!-- Wallet -->
     <section id="wallet" class="page-section max-w-md mx-auto text-center">
