@@ -80,8 +80,15 @@
     <!-- Home -->
     <section id="home" class="page-section text-center active">
       <img src="img/logo.png" alt="KenariCoin Logo" class="w-32 h-32 rounded-full mx-auto shadow-lg border border-yellow-400 glow-hover">
-      <h1 class="text-3xl font-bold mt-4 text-yellow-400">Selamat Datang di KenariCoin</h1>
+      <h1 class="text-3xl font-bold mt-4 text-yellow-400" data-i18n="welcome">
+  Selamat Datang di KenariCoin
+</h1>
 
+<button id="connectBtn" onclick="openModal()"
+  class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm"
+  data-i18n="connect">
+  Connect
+</button>
       <div class="mt-6 max-w-xl mx-auto bg-gray-800 shadow rounded-xl p-4 text-gray-300 glow-hover">
         <h3 class="font-bold mb-2">📜 Contract Address</h3>
         <div class="flex items-center justify-between gap-3">
@@ -565,13 +572,52 @@ if(window.ethereum){
   });
   window.ethereum.on('chainChanged', () => { setTimeout(()=>location.reload(), 200); });
 }
+// ========== TRANSLATIONS ==========
+const translations = {
+  id: {
+    welcome: "Selamat Datang di KenariCoin",
+    connect: "Hubungkan Wallet",
+    contract: "📜 Alamat Kontrak",
+    wallet_balance: "Saldo Wallet",
+    staking: "Staking KN",
+    about: "Tentang KenariCoin",
+    contact: "Kontak",
+    faq: "Pertanyaan Umum"
+  },
+  en: {
+    welcome: "Welcome to KenariCoin",
+    connect: "Connect Wallet",
+    contract: "📜 Contract Address",
+    wallet_balance: "Wallet Balance",
+    staking: "Stake KN",
+    about: "About KenariCoin",
+    contact: "Contact",
+    faq: "FAQ"
+  }
+};
 
+function switchLang(lang){
+  localStorage.setItem("lang", lang);
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if(translations[lang] && translations[lang][key]) {
+      el.textContent = translations[lang][key];
+    }
+  });
+}
+// ========== INIT ==========
 // ========== INIT ==========
 window.addEventListener('DOMContentLoaded', () => {
   try {
     document.getElementById('networkSwitcher').value = 'testnet';
     switchNetwork('testnet');
     setConnectedState(false);
+
+    // bahasa default
+    const savedLang = localStorage.getItem("lang") || "id";
+    document.getElementById("langSwitcher").value = savedLang;
+    switchLang(savedLang);
+
     const hash = location.hash?.replace('#','') || 'home';
     showPage(hash);
     document.getElementById('contractAddr').innerText = KN || '';
