@@ -450,25 +450,31 @@ async function updateReward(){
     console.error('updateReward error', err);
   }
 }
-
 async function claimFaucet(){
-  if(!signer) return alert('Hubungkan wallet dulu!');
-  if(!FAUCET_CONTRACT) return alert('Faucet belum tersedia pada jaringan ini.');
+  if(!signer) return showToast('Hubungkan wallet dulu!', "info");
+  if(!FAUCET_CONTRACT) return showToast('Faucet belum tersedia pada jaringan ini.', "warning");
   try {
     const faucet = new ethers.Contract(FAUCET_CONTRACT, FAUCET_ABI, signer);
     const tx = await faucet.faucet();
     await tx.wait();
-    alert('🎉 Faucet berhasil! Token KN ditambahkan ke wallet Anda.');
+    showToast('🎉 Faucet berhasil! Token KN ditambahkan ke wallet Anda.', "success");
     await updateBalances();
   } catch(err){
     console.error('claimFaucet error', err);
-    let msg = err?.data?.message || err?.error?.message || err.message || "Gagal claim faucet";
 
-    // kalau error dari kontrak ada kata "cooldown"
-    if(msg.toLowerCase().includes("cooldown")) {
-      alert("⏳ Kamu sudah klaim faucet. Silakan tunggu sampai cooldown selesai.");
+    // Ambil pesan error dari berbagai kemungkinan
+    let msg = err?.data?.message || err?.error?.message || err?.reason || err.message || "Gagal claim faucet";
+
+    // Hapus prefix "execution reverted:" biar lebih jelas
+    if(msg.toLowerCase().includes("execution reverted")) {
+      msg = msg.split("execution reverted:").pop().trim();
+    }
+
+    // Kalau pesan mengandung "cooldown"
+    if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu")) {
+      showToast("⏳ " + msg, "warning");
     } else {
-      alert("❌ " + msg);
+      showToast("❌ " + msg, "error");
     }
   }
 }
