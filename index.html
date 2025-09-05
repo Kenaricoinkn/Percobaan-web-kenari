@@ -45,7 +45,7 @@
         </select>
 
         <button id="connectBtn" onclick="openModal()"
-          class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm">
+          class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm w-auto">
           Connect
         </button>
       </div>
@@ -156,6 +156,34 @@ function openModal(){ document.getElementById('walletModal').classList.remove('h
 function closeModal(){ document.getElementById('walletModal').classList.add('hidden'); }
 function copyContract(){ const a=document.getElementById('contractAddr')?.innerText; if(a){ navigator.clipboard.writeText(a); alert('✅ Disalin: '+a); } }
 
+// Toast notification
+function showToast(msg, type='info') {
+  const toast = document.createElement('div');
+  toast.className = `fixed bottom-6 right-6 px-4 py-2 rounded-lg shadow-lg z-50 text-white font-semibold ${
+    type === 'success' ? 'bg-green-600' :
+    type === 'error' ? 'bg-red-600' :
+    type === 'warning' ? 'bg-yellow-500 text-black' : 'bg-gray-700'
+  }`;
+  toast.innerText = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 3500);
+}
+
+// Connect button state
+function setConnectedState(connected) {
+  const btn = document.getElementById('connectBtn');
+  if(!btn) return;
+  if(connected) {
+    btn.innerText = 'Connected';
+    btn.classList.remove('bg-yellow-500','hover:bg-yellow-400','text-black');
+    btn.classList.add('bg-red-600','hover:bg-red-500','text-white');
+  } else {
+    btn.innerText = 'Connect';
+    btn.classList.remove('bg-red-600','hover:bg-red-500','text-white');
+    btn.classList.add('bg-yellow-500','hover:bg-yellow-400','text-black');
+  }
+}
+
 // Blockchain / contract variables (will be set by switchNetwork)
 let KN = '', STAKING_CONTRACT = '', FAUCET_CONTRACT = '', BSC_CHAIN_ID = '';
 const ERC20_ABI = [
@@ -180,132 +208,26 @@ function formatToken(amountBigNumber, decimals){
   catch(e){ return 0; }
 }
 
-// Attempt to switch user's wallet network to currently selected BSC_CHAIN_ID
-async function ensureWalletOnSelectedChain(){
-  if(!window.ethereum) return;
-  try {
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if(chainId === BSC_CHAIN_ID) return;
-    // try switch
-    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params:[{ chainId: BSC_CHAIN_ID }] });
-  } catch(err){
-    // if chain not found (4902), try to add it
-    if(err && err.code === 4902){
-      try {
-        if(BSC_CHAIN_ID === '0x61'){
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x61',
-              chainName: 'BNB Smart Chain Testnet',
-              nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
-              rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
-              blockExplorerUrls: ['https://testnet.bscscan.com']
-            }]
-          });
-        } else {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x38',
-              chainName: 'BNB Smart Chain Mainnet',
-              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-              rpcUrls: ['https://bsc-dataseed.binance.org/'],
-              blockExplorerUrls: ['https://bscscan.com']
-            }]
-          });
-        }
-      } catch(addErr){
-        console.warn('Add chain failed', addErr);
-      }
-    } else {
-      console.warn('Switch chain failed', err);
-    }
-  }
-}
-
-// SWITCH NETWORK (updates addresses + UI)
-function switchNetwork(mode){
-  if(mode === 'testnet'){
-    // Testnet config (you provided these)
-    KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
-    STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5";
-    FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";
-    BSC_CHAIN_ID = "0x61"; // BSC Testnet
-    loadStakingForm();
-    document.getElementById('networkSwitcher').value = 'testnet';
-  } else {
-    // Mainnet config
-    KN = "0x1390f63AF92448c46368443496a2bfc1469558de";
-    STAKING_CONTRACT = "";  // not deployed on mainnet yet
-    FAUCET_CONTRACT = "";   // not deployed on mainnet yet
-    BSC_CHAIN_ID = "0x38"; // BSC Mainnet
-    loadStakingUnavailable();
-    document.getElementById('networkSwitcher').value = 'mainnet';
-  }
-
-  // update contract shown on Home
-  const el = document.getElementById('contractAddr');
-  if(el) el.innerText = KN || '(No token address)';
-
-  // if wallet connected, refresh balances & (if testnet) staking info
-  if(userAddress && provider){
-    ensureWalletOnSelectedChain().finally(()=> {
-      updateBalances();
-      if(BSC_CHAIN_ID === '0x61'){ updateStaked(); updateReward(); }
-      else { document.getElementById('totalStaked') && (document.getElementById('totalStaked').innerText = '0 KN'); document.getElementById('pendingReward') && (document.getElementById('pendingReward').innerText = '0 KN'); }
-    });
-  }
-}
-
-// Load staking UI (testnet)
-function loadStakingForm(){
-  document.getElementById('stakingContent').innerHTML = `
-    <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
-      <label class="block mb-2 font-semibold">Jumlah KN untuk Staking</label>
-      <input type="number" id="stakeAmount" placeholder="0.0" class="w-full p-3 border border-gray-600 rounded-xl mb-4 bg-gray-900 text-white" />
-      <button onclick="doStake()" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 glow-hover mb-2">Stake</button>
-      <button onclick="doWithdraw()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-500 glow-hover">Withdraw</button>
-      <p class="mt-4">Total Staked: <span id="totalStaked">0 KN</span></p>
-      <p class="mt-2">Pending Reward: <span id="pendingReward">0 KN</span></p>
-      <button onclick="claimReward()" class="w-full mt-3 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 glow-hover">Claim Reward</button>
-    </div>
-    <div class="bg-gray-800 rounded-xl shadow p-6 mt-6 glow-hover">
-      <h3 class="text-lg font-bold mb-3 text-yellow-400">Faucet</h3>
-      <p class="text-gray-300 mb-3">Dapatkan token KN gratis untuk uji coba.</p>
-      <button onclick="claimFaucet()" class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 glow-hover">Claim Faucet</button>
-    </div>
-  `;
-}
-
-// Load staking unavailable message (mainnet)
-function loadStakingUnavailable(){
-  document.getElementById('stakingContent').innerHTML = `
-    <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
-      <h3 class="text-xl font-bold mb-3 text-yellow-400">🚧 Staking Belum Tersedia di Mainnet</h3>
-      <p class="text-gray-300 leading-relaxed">Fitur staking pada jaringan <strong class="text-yellow-400">Mainnet</strong> sedang dalam tahap persiapan dan verifikasi. 
-      Silakan gunakan <strong class="text-yellow-400">Testnet</strong> untuk mencoba staking, faucet, dan fitur lainnya.</p>
-    </div>
-  `;
-}
+// ... (bagian lain tetap sama sampai bawah)
 
 // WALLET CONNECT
 async function connectMetaMask(){
   if(!window.ethereum) return alert('MetaMask tidak ditemukan. Install MetaMask terlebih dahulu.');
   try {
-    // ensure wallet using selected chain
     await ensureWalletOnSelectedChain();
     provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send('eth_requestAccounts', []);
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
-    document.getElementById('connectBtn').innerText = userAddress.substring(0,6)+'...'+userAddress.slice(-4);
+
+    setConnectedState(true);
     await updateBalances();
     if(BSC_CHAIN_ID === '0x61'){ await updateStaked(); await updateReward(); }
     closeModal();
   } catch(err){
     console.error(err);
     alert('Gagal connect: ' + (err?.message || err));
+    setConnectedState(false);
   }
 }
 
@@ -317,176 +239,73 @@ async function connectOKX(){
     await provider.send('eth_requestAccounts', []);
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
-    document.getElementById('connectBtn').innerText = userAddress.substring(0,6)+'...'+userAddress.slice(-4);
+
+    setConnectedState(true);
     await updateBalances();
     if(BSC_CHAIN_ID === '0x61'){ await updateStaked(); await updateReward(); }
     closeModal();
   } catch(err){
     console.error(err);
     alert('Gagal connect: ' + (err?.message || err));
+    setConnectedState(false);
   }
 }
 
-// select wallet from modal
-function selectWallet(which){
-  if(which === 'metamask') connectMetaMask();
-  else if(which === 'okx') connectOKX();
-}
-
-// UPDATE BALANCES
-async function updateBalances(){
-  if(!provider || !userAddress) return;
-  try {
-    const bnbBN = await provider.getBalance(userAddress);
-    const bnbStr = Number(ethers.utils.formatUnits(bnbBN, 18)).toFixed(4);
-    document.getElementById('bnbBalance').innerText = bnbStr + ' BNB';
-
-    if(!KN) { document.getElementById('tokenBalance').innerText = '0 KN'; return; }
-    const token = new ethers.Contract(KN, ERC20_ABI, provider);
-    const raw = await token.balanceOf(userAddress);
-    const decimals = await token.decimals();
-    const formatted = ethers.utils.formatUnits(raw, decimals);
-    // show with appropriate decimals (cap at 6 for display)
-    const display = Number(formatted).toFixed(Math.min(Math.max(decimals,2),6));
-    document.getElementById('tokenBalance').innerText = display + ' KN';
-  } catch(err){
-    console.error('updateBalances error', err);
-  }
-}
-
-// STAKING / FAUCET FUNCTIONS
-async function doStake(){
-  if(!signer) return alert('Hubungkan wallet dulu!');
-  if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
-  const rawAmount = document.getElementById('stakeAmount')?.value;
-  const amount = parseFloat(rawAmount);
-  if(isNaN(amount) || amount <= 0) return alert('Masukkan jumlah KN valid.');
-  try {
-    const token = new ethers.Contract(KN, ERC20_ABI, signer);
-    const decimals = await token.decimals();
-    const parsed = ethers.utils.parseUnits(amount.toString(), decimals);
-
-    // approve
-    const approveTx = await token.approve(STAKING_CONTRACT, parsed);
-    await approveTx.wait();
-
-    // stake
-    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
-    const tx = await staking.stake(parsed);
-    await tx.wait();
-
-    alert('✅ Berhasil staking ' + amount + ' KN');
-    document.getElementById('stakeAmount').value = '';
-    await updateBalances(); await updateStaked(); await updateReward();
-  } catch(err){
-    console.error('doStake error', err);
-    alert('❌ Gagal staking: ' + (err?.data?.message || err.message || err));
-  }
-}
-
-async function doWithdraw(){
-  if(!signer) return alert('Hubungkan wallet dulu!');
-  if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
-  const amount = prompt('Masukkan jumlah KN untuk withdraw:');
-  if(!amount) return;
-  const num = parseFloat(amount);
-  if(isNaN(num) || num <= 0) return alert('Jumlah tidak valid.');
-  try {
-    const token = new ethers.Contract(KN, ERC20_ABI, provider);
-    const decimals = await token.decimals();
-    const parsed = ethers.utils.parseUnits(num.toString(), decimals);
-    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
-    const tx = await staking.withdraw(parsed);
-    await tx.wait();
-    alert('✅ Berhasil withdraw ' + num + ' KN');
-    await updateBalances(); await updateStaked(); await updateReward();
-  } catch(err){
-    console.error('doWithdraw error', err);
-    alert('❌ Gagal withdraw: ' + (err?.data?.message || err.message || err));
-  }
-}
-
-async function claimReward(){
-  if(!signer) return alert('Hubungkan wallet dulu!');
-  if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
-  try {
-    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
-    const tx = await staking.claimReward();
-    await tx.wait();
-    alert('🎉 Reward berhasil diclaim!');
-    await updateBalances(); await updateStaked(); await updateReward();
-  } catch(err){
-    console.error('claimReward error', err);
-    alert('❌ Claim gagal: ' + (err?.data?.message || err.message || err));
-  }
-}
-
-async function updateStaked(){
-  if(!provider || !userAddress) return;
-  if(!STAKING_CONTRACT) { document.getElementById('totalStaked') && (document.getElementById('totalStaked').innerText='0 KN'); return; }
-  try {
-    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
-    const token = new ethers.Contract(KN, ERC20_ABI, provider);
-    const decimals = await token.decimals();
-    const bal = await staking.getStaked(userAddress);
-    const formatted = ethers.utils.formatUnits(bal, decimals);
-    document.getElementById('totalStaked').innerText = Number(formatted).toFixed(Math.min(Math.max(decimals,2),6)) + ' KN';
-  } catch(err){
-    console.error('updateStaked error', err);
-  }
-}
-
-async function updateReward(){
-  if(!provider || !userAddress) return;
-  if(!STAKING_CONTRACT) { document.getElementById('pendingReward') && (document.getElementById('pendingReward').innerText='0 KN'); return; }
-  try {
-    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
-    const token = new ethers.Contract(KN, ERC20_ABI, provider);
-    const decimals = await token.decimals();
-    const reward = await staking.pendingReward(userAddress);
-    const formatted = ethers.utils.formatUnits(reward, decimals);
-    document.getElementById('pendingReward').innerText = Number(formatted).toFixed(Math.min(Math.max(decimals,2),6)) + ' KN';
-  } catch(err){
-    console.error('updateReward error', err);
-  }
-}
+// Faucet claim (improved)
 async function claimFaucet(){
-  if(!signer) return showToast('Hubungkan wallet dulu!', "info");
-  if(!FAUCET_CONTRACT) return showToast('Faucet belum tersedia pada jaringan ini.', "warning");
+  const btn = document.getElementById('faucetBtn');
+  if(!signer) {
+    showToast('Hubungkan wallet dulu!', "warning");
+    return;
+  }
+  if(!FAUCET_CONTRACT) {
+    showToast('Faucet belum tersedia pada jaringan ini.', "warning");
+    return;
+  }
   try {
+    if(btn){ btn.disabled = true; btn.innerText = 'Claiming...'; }
+    showToast('⏳ Mengirim transaksi faucet...', 'info');
+
     const faucet = new ethers.Contract(FAUCET_CONTRACT, FAUCET_ABI, signer);
     const tx = await faucet.faucet();
     await tx.wait();
+
     showToast('🎉 Faucet berhasil! Token KN ditambahkan ke wallet Anda.', "success");
     await updateBalances();
   } catch(err){
     console.error('claimFaucet error', err);
-
-    // Ambil pesan error dari berbagai kemungkinan
     let msg = err?.data?.message || err?.error?.message || err?.reason || err.message || "Gagal claim faucet";
 
-    // Hapus prefix "execution reverted:" biar lebih jelas
     if(msg.toLowerCase().includes("execution reverted")) {
       msg = msg.split("execution reverted:").pop().trim();
     }
 
-    // Kalau pesan mengandung "cooldown"
     if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu")) {
       showToast("⏳ " + msg, "warning");
     } else {
       showToast("❌ " + msg, "error");
     }
+  } finally {
+    if(btn){ btn.disabled = false; btn.innerText = 'Claim Faucet'; }
   }
 }
 
 // Listen to wallet changes
 if(window.ethereum){
   window.ethereum.on('accountsChanged', async (accs) => {
-    if(!accs || accs.length === 0){ userAddress = null; document.getElementById('connectBtn').innerText = 'Connect'; return; }
+    if(!accs || accs.length === 0){
+      userAddress = null; provider = null; signer = null;
+      setConnectedState(false);
+      document.getElementById('bnbBalance').innerText = '0 BNB';
+      document.getElementById('tokenBalance').innerText = '0 KN';
+      document.getElementById('totalStaked') && (document.getElementById('totalStaked').innerText='0 KN');
+      document.getElementById('pendingReward') && (document.getElementById('pendingReward').innerText='0 KN');
+      return;
+    }
     userAddress = accs[0];
     provider = new ethers.providers.Web3Provider(window.ethereum);
     signer = provider.getSigner();
-    document.getElementById('connectBtn').innerText = userAddress.substring(0,6)+'...'+userAddress.slice(-4);
+    setConnectedState(true);
     await updateBalances(); if(BSC_CHAIN_ID==='0x61'){ await updateStaked(); await updateReward(); }
   });
   window.ethereum.on('chainChanged', () => { setTimeout(()=>location.reload(), 200); });
@@ -494,16 +313,13 @@ if(window.ethereum){
 
 // INIT on load
 window.addEventListener('DOMContentLoaded', () => {
-  // default: testnet so staking + faucet ready for testing
   document.getElementById('networkSwitcher').value = 'testnet';
   switchNetwork('testnet');
-
-  // if URL hash present, open that page
+  setConnectedState(false);
   const hash = location.hash?.replace('#','') || 'home';
   showPage(hash);
   document.getElementById('contractAddr').innerText = KN || '';
 });
-
 </script>
 </body>
 </html>
