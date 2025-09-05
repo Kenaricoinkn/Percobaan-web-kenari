@@ -19,14 +19,12 @@
   <!-- NAVBAR -->
   <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
-      <!-- Left: logo + hamburger -->
       <div class="flex items-center gap-3">
         <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
         <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
         <span class="font-bold text-lg text-yellow-400 select-none">KenariCoin</span>
       </div>
 
-      <!-- Center: desktop nav -->
       <div id="navLinks" class="hidden md:flex space-x-6">
         <a href="#" onclick="navigate('home')" class="hover:text-yellow-400">Home</a>
         <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400">Wallet</a>
@@ -36,7 +34,6 @@
         <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400">FAQ</a>
       </div>
 
-      <!-- Right: switcher + connect -->
       <div class="flex items-center gap-2">
         <select id="networkSwitcher" onchange="switchNetwork(this.value)"
           class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
@@ -51,7 +48,6 @@
       </div>
     </div>
 
-    <!-- Mobile menu -->
     <div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
       <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
       <a href="#" onclick="navigate('wallet'); toggleMenu(false)" class="block hover:text-yellow-400">Wallet</a>
@@ -145,10 +141,10 @@
 
 <script>
 /* ----------------------------
-   Full client script: complete
+   SCRIPT BLOCKCHAIN & UI
    ---------------------------- */
 
-// Utility UI functions
+// ===== Utility UI =====
 function showPage(id){ document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); const el=document.getElementById(id); if(el) el.classList.add('active'); }
 function navigate(id){ showPage(id); closeModal(); toggleMenu(false); if(id) history.replaceState(null,'','#'+id); }
 function toggleMenu(force){ const m=document.getElementById('mobileMenu'); if(!m) return; if(typeof force==='boolean'){ m.classList.toggle('hidden', !force); } else m.classList.toggle('hidden'); }
@@ -184,7 +180,7 @@ function setConnectedState(connected) {
   }
 }
 
-// Blockchain / contract variables (will be set by switchNetwork)
+// Blockchain / contract variables (akan di-set oleh switchNetwork)
 let KN = '', STAKING_CONTRACT = '', FAUCET_CONTRACT = '', BSC_CHAIN_ID = '';
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
@@ -208,9 +204,70 @@ function formatToken(amountBigNumber, decimals){
   catch(e){ return 0; }
 }
 
-// ... (bagian lain tetap sama sampai bawah)
+// ========== SWITCH NETWORK ==========
+function switchNetwork(mode){
+  if(mode === 'testnet'){
+    KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
+    STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5";
+    FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";
+    BSC_CHAIN_ID = "0x61"; // BSC Testnet
+    loadStakingForm();
+    document.getElementById('networkSwitcher').value = 'testnet';
+  } else {
+    KN = "0x1390f63AF92448c46368443496a2bfc1469558de";
+    STAKING_CONTRACT = "";
+    FAUCET_CONTRACT = "";
+    BSC_CHAIN_ID = "0x38"; // BSC Mainnet
+    loadStakingUnavailable();
+    document.getElementById('networkSwitcher').value = 'mainnet';
+  }
 
-// WALLET CONNECT
+  const el = document.getElementById('contractAddr');
+  if(el) el.innerText = KN || '(No token address)';
+
+  if(userAddress && provider){
+    ensureWalletOnSelectedChain().finally(()=> {
+      updateBalances();
+      if(BSC_CHAIN_ID === '0x61'){ updateStaked(); updateReward(); }
+      else {
+        document.getElementById('totalStaked') && (document.getElementById('totalStaked').innerText = '0 KN');
+        document.getElementById('pendingReward') && (document.getElementById('pendingReward').innerText = '0 KN');
+      }
+    });
+  }
+}
+
+// ========== STAKING UI ==========
+function loadStakingForm(){
+  document.getElementById('stakingContent').innerHTML = `
+    <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
+      <label class="block mb-2 font-semibold">Jumlah KN untuk Staking</label>
+      <input type="number" id="stakeAmount" placeholder="0.0" class="w-full p-3 border border-gray-600 rounded-xl mb-4 bg-gray-900 text-white" />
+      <button onclick="doStake()" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 glow-hover mb-2">Stake</button>
+      <button onclick="doWithdraw()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-500 glow-hover">Withdraw</button>
+      <p class="mt-4">Total Staked: <span id="totalStaked">0 KN</span></p>
+      <p class="mt-2">Pending Reward: <span id="pendingReward">0 KN</span></p>
+      <button onclick="claimReward()" class="w-full mt-3 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 glow-hover">Claim Reward</button>
+    </div>
+    <div class="bg-gray-800 rounded-xl shadow p-6 mt-6 glow-hover">
+      <h3 class="text-lg font-bold mb-3 text-yellow-400">Faucet</h3>
+      <p class="text-gray-300 mb-3">Dapatkan token KN gratis untuk uji coba.</p>
+      <button id="faucetBtn" onclick="claimFaucet()" class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 glow-hover">Claim Faucet</button>
+    </div>
+  `;
+}
+
+function loadStakingUnavailable(){
+  document.getElementById('stakingContent').innerHTML = `
+    <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
+      <h3 class="text-xl font-bold mb-3 text-yellow-400">🚧 Staking Belum Tersedia di Mainnet</h3>
+      <p class="text-gray-300 leading-relaxed">Fitur staking pada jaringan <strong class="text-yellow-400">Mainnet</strong> sedang dalam tahap persiapan.
+      Silakan gunakan <strong class="text-yellow-400">Testnet</strong> untuk mencoba staking dan faucet.</p>
+    </div>
+  `;
+}
+
+// ========== WALLET CONNECT ==========
 async function connectMetaMask(){
   if(!window.ethereum) return alert('MetaMask tidak ditemukan. Install MetaMask terlebih dahulu.');
   try {
@@ -251,7 +308,126 @@ async function connectOKX(){
   }
 }
 
-// Faucet claim (improved)
+function selectWallet(which){
+  if(which === 'metamask') connectMetaMask();
+  else if(which === 'okx') connectOKX();
+}
+
+// ========== UPDATE BALANCE ==========
+async function updateBalances(){
+  if(!provider || !userAddress) return;
+  try {
+    const bnbBN = await provider.getBalance(userAddress);
+    const bnbStr = Number(ethers.utils.formatUnits(bnbBN, 18)).toFixed(4);
+    document.getElementById('bnbBalance').innerText = bnbStr + ' BNB';
+
+    if(!KN) { document.getElementById('tokenBalance').innerText = '0 KN'; return; }
+    const token = new ethers.Contract(KN, ERC20_ABI, provider);
+    const raw = await token.balanceOf(userAddress);
+    const decimals = await token.decimals();
+    const formatted = ethers.utils.formatUnits(raw, decimals);
+    const display = Number(formatted).toFixed(Math.min(Math.max(decimals,2),6));
+    document.getElementById('tokenBalance').innerText = display + ' KN';
+  } catch(err){
+    console.error('updateBalances error', err);
+  }
+}
+
+// ========== STAKING ACTIONS ==========
+async function doStake(){
+  if(!signer) return alert('Hubungkan wallet dulu!');
+  if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
+  const rawAmount = document.getElementById('stakeAmount')?.value;
+  const amount = parseFloat(rawAmount);
+  if(isNaN(amount) || amount <= 0) return alert('Masukkan jumlah KN valid.');
+  try {
+    const token = new ethers.Contract(KN, ERC20_ABI, signer);
+    const decimals = await token.decimals();
+    const parsed = ethers.utils.parseUnits(amount.toString(), decimals);
+
+    const approveTx = await token.approve(STAKING_CONTRACT, parsed);
+    await approveTx.wait();
+
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
+    const tx = await staking.stake(parsed);
+    await tx.wait();
+
+    showToast('✅ Berhasil staking ' + amount + ' KN', "success");
+    document.getElementById('stakeAmount').value = '';
+    await updateBalances(); await updateStaked(); await updateReward();
+  } catch(err){
+    console.error('doStake error', err);
+    showToast('❌ Gagal staking: ' + (err?.data?.message || err.message || err), "error");
+  }
+}
+
+async function doWithdraw(){
+  if(!signer) return alert('Hubungkan wallet dulu!');
+  if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
+  const amount = prompt('Masukkan jumlah KN untuk withdraw:');
+  if(!amount) return;
+  const num = parseFloat(amount);
+  if(isNaN(num) || num <= 0) return alert('Jumlah tidak valid.');
+  try {
+    const token = new ethers.Contract(KN, ERC20_ABI, provider);
+    const decimals = await token.decimals();
+    const parsed = ethers.utils.parseUnits(num.toString(), decimals);
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
+    const tx = await staking.withdraw(parsed);
+    await tx.wait();
+    showToast('✅ Berhasil withdraw ' + num + ' KN', "success");
+    await updateBalances(); await updateStaked(); await updateReward();
+  } catch(err){
+    console.error('doWithdraw error', err);
+    showToast('❌ Gagal withdraw: ' + (err?.data?.message || err.message || err), "error");
+  }
+}
+
+async function claimReward(){
+  if(!signer) return alert('Hubungkan wallet dulu!');
+  if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
+  try {
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, signer);
+    const tx = await staking.claimReward();
+    await tx.wait();
+    showToast('🎉 Reward berhasil diclaim!', "success");
+    await updateBalances(); await updateStaked(); await updateReward();
+  } catch(err){
+    console.error('claimReward error', err);
+    showToast('❌ Claim gagal: ' + (err?.data?.message || err.message || err), "error");
+  }
+}
+
+async function updateStaked(){
+  if(!provider || !userAddress) return;
+  if(!STAKING_CONTRACT) { document.getElementById('totalStaked') && (document.getElementById('totalStaked').innerText='0 KN'); return; }
+  try {
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
+    const token = new ethers.Contract(KN, ERC20_ABI, provider);
+    const decimals = await token.decimals();
+    const bal = await staking.getStaked(userAddress);
+    const formatted = ethers.utils.formatUnits(bal, decimals);
+    document.getElementById('totalStaked').innerText = Number(formatted).toFixed(Math.min(Math.max(decimals,2),6)) + ' KN';
+  } catch(err){
+    console.error('updateStaked error', err);
+  }
+}
+
+async function updateReward(){
+  if(!provider || !userAddress) return;
+  if(!STAKING_CONTRACT) { document.getElementById('pendingReward') && (document.getElementById('pendingReward').innerText='0 KN'); return; }
+  try {
+    const staking = new ethers.Contract(STAKING_CONTRACT, STAKING_ABI, provider);
+    const token = new ethers.Contract(KN, ERC20_ABI, provider);
+    const decimals = await token.decimals();
+    const reward = await staking.pendingReward(userAddress);
+    const formatted = ethers.utils.formatUnits(reward, decimals);
+    document.getElementById('pendingReward').innerText = Number(formatted).toFixed(Math.min(Math.max(decimals,2),6)) + ' KN';
+  } catch(err){
+    console.error('updateReward error', err);
+  }
+}
+
 async function claimFaucet(){
   const btn = document.getElementById('faucetBtn');
   if(!signer) {
@@ -290,7 +466,7 @@ async function claimFaucet(){
   }
 }
 
-// Listen to wallet changes
+// ========== LISTEN WALLET EVENTS ==========
 if(window.ethereum){
   window.ethereum.on('accountsChanged', async (accs) => {
     if(!accs || accs.length === 0){
@@ -311,7 +487,7 @@ if(window.ethereum){
   window.ethereum.on('chainChanged', () => { setTimeout(()=>location.reload(), 200); });
 }
 
-// INIT on load
+// ========== INIT ==========
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('networkSwitcher').value = 'testnet';
   switchNetwork('testnet');
