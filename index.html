@@ -21,10 +21,15 @@
     <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
   <!-- LEFT: Hamburger + Logo + Nama -->
   <div class="flex items-center gap-3">
-    <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
-    <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
-    <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap">Kenari</span>
-  </div>
+  <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+  <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
+
+  <!-- Singkatan untuk HP -->
+  <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap block md:hidden">KN</span>
+
+  <!-- Nama lengkap untuk Desktop -->
+  <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap hidden md:block">KenariCoin</span>
+</div>
 
   <!-- CENTER: Nav Links (desktop only) -->
   <div id="navLinks" class="hidden md:flex space-x-6">
