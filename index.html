@@ -18,17 +18,16 @@
 
   <!-- NAVBAR -->
   <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
-    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16 overflow-hidden">
-  <!<div class="max-w-7xl mx-auto px-4 flex items-center h-16">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
   <!-- LEFT: Hamburger + Logo + Nama -->
-  <div class="flex items-center gap-3 flex-none">
+  <div class="flex items-center gap-3">
     <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
-    <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full flex-none">
+    <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
     <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap">KenariCoin</span>
   </div>
 
-  <!-- CENTER: Nav Links (desktop only, flex-grow biar jadi penyeimbang) -->
-  <div id="navLinks" class="hidden md:flex space-x-6 flex-grow justify-center">
+  <!-- CENTER: Nav Links (desktop only) -->
+  <div id="navLinks" class="hidden md:flex space-x-6">
     <a href="#" onclick="navigate('home')" class="hover:text-yellow-400">Home</a>
     <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400">Wallet</a>
     <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400">Staking</a>
@@ -38,7 +37,7 @@
   </div>
 
   <!-- RIGHT: Network + Language + Connect -->
-  <div class="flex items-center gap-2 flex-none">
+  <div class="flex items-center gap-2 flex-shrink-0">
     <!-- Network Switcher -->
     <select id="networkSwitcher" onchange="switchNetwork(this.value)"
       class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
@@ -55,7 +54,7 @@
 
     <!-- Connect Button -->
     <button id="connectBtn" onclick="openModal()"
-      class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm w-auto">
+      class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm">
       Connect
     </button>
   </div>
