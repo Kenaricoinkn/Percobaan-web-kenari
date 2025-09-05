@@ -35,18 +35,26 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <select id="networkSwitcher" onchange="switchNetwork(this.value)"
-          class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
-          <option value="testnet">Testnet</option>
-          <option value="mainnet">Mainnet</option>
-        </select>
+  <!-- Network Switcher -->
+  <select id="networkSwitcher" onchange="switchNetwork(this.value)"
+    class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
+    <option value="testnet">Testnet</option>
+    <option value="mainnet">Mainnet</option>
+  </select>
 
-        <button id="connectBtn" onclick="openModal()"
-          class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm w-auto">
-          Connect
-        </button>
-      </div>
-    </div>
+  <!-- 🔥 Language Switcher -->
+  <select id="langSwitcher" onchange="switchLang(this.value)"
+    class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
+    <option value="id">ID</option>
+    <option value="en">EN</option>
+  </select>
+
+  <!-- Connect Button -->
+  <button id="connectBtn" onclick="openModal()"
+    class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm w-auto">
+    Connect
+  </button>
+</div>
 
     <div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
       <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
