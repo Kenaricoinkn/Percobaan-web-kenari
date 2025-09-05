@@ -7,17 +7,16 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="img/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
   <style>
-    .page-section{opacity:0;transform:translateY(10px);transition:opacity .35s,transform .35s;display:none}
-    .page-section.active{display:block;opacity:1;transform:translateY(0)}
-    .glow-hover:hover{box-shadow:0 0 12px rgba(250,204,21,.7)}
-    #toastContainer{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
-    .toast{padding:.75rem 1rem;border-radius:.75rem;font-weight:500;animation:fadeIn .3s}
-    .toast-success{background:#22c55e;color:#fff}
-    .toast-error{background:#ef4444;color:#fff}
-    .toast-warning{background:#eab308;color:#000}
-    .toast-info{background:#3b82f6;color:#fff}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    .page-section { opacity:0; transform:translateY(10px); transition:opacity .35s ease,transform .35s ease; display:none; }
+    .page-section.active { display:block; opacity:1; transform:translateY(0); }
+    .glow-hover:hover { box-shadow:0 0 12px rgba(250,204,21,.7); transition:box-shadow .25s ease; }
+    .toast { position:fixed; right:1rem; bottom:1rem; padding:0.75rem 1rem; border-radius:0.5rem; font-weight:600; z-index:9999; }
+    .toast-success { background:#16a34a; color:white; }
+    .toast-error { background:#dc2626; color:white; }
+    .toast-warning { background:#d97706; color:white; }
+    .toast-info { background:#2563eb; color:white; }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
@@ -26,10 +25,11 @@
   <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
       <div class="flex items-center gap-3">
-        <button class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()">☰</button>
+        <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
         <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
-        <span class="font-bold text-lg text-yellow-400">KenariCoin</span>
+        <span class="font-bold text-lg text-yellow-400 select-none">KenariCoin</span>
       </div>
+
       <div id="navLinks" class="hidden md:flex space-x-6">
         <a href="#" onclick="navigate('home')" class="hover:text-yellow-400">Home</a>
         <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400">Wallet</a>
@@ -38,17 +38,19 @@
         <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400">Contact</a>
         <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400">FAQ</a>
       </div>
+
       <div class="flex items-center gap-2">
         <select id="networkSwitcher" onchange="switchNetwork(this.value)" class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
           <option value="testnet">Testnet</option>
           <option value="mainnet">Mainnet</option>
         </select>
-        <button id="connectBtn"
-  class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm">
-  Connect
-</button>
+
+        <button id="connectBtn" onclick="openModal()" class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm">
+          Connect
+        </button>
       </div>
     </div>
+
     <div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
       <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
       <a href="#" onclick="navigate('wallet'); toggleMenu(false)" class="block hover:text-yellow-400">Wallet</a>
@@ -88,7 +90,7 @@
 
     <section id="about" class="page-section max-w-2xl mx-auto text-center">
       <h2 class="text-2xl font-bold mb-4 text-yellow-400">Tentang KenariCoin</h2>
-      <p class="text-gray-300">KenariCoin (KN) adalah token BEP-20 di BNB Smart Chain yang dirancang untuk ekosistem DeFi.</p>
+      <p class="text-gray-300 leading-relaxed">KenariCoin (KN) adalah token BEP-20 di BNB Smart Chain yang dirancang untuk ekosistem DeFi.</p>
     </section>
 
     <section id="contact" class="page-section max-w-2xl mx-auto text-center">
@@ -118,6 +120,18 @@
       </div>
     </div>
   </footer>
+
+  <!-- WALLET MODAL -->
+  <div id="walletModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-lg text-gray-100 glow-hover">
+      <h2 class="text-lg font-bold mb-4 text-center">Connect Wallet</h2>
+      <div class="space-y-3">
+        <button onclick="selectWallet('metamask')" class="w-full border border-gray-600 rounded-lg py-2 hover:bg-gray-700 glow-hover">🦊 MetaMask</button>
+        <button onclick="selectWallet('okx')" class="w-full border border-gray-600 rounded-lg py-2 hover:bg-gray-700 glow-hover">⚫ OKX Wallet</button>
+      </div>
+      <button onclick="closeModal()" class="w-full mt-3 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 glow-hover">Cancel</button>
+    </div>
+  </div>
 
   <!-- TOAST CONTAINER -->
   <div id="toastContainer"></div>
