@@ -104,10 +104,13 @@
     </section>
 
     <!-- Staking -->
-    <section id="staking" class="page-section max-w-md mx-auto text-center">
-      <h2 class="text-2xl font-bold mb-4 text-yellow-400">Staking KN</h2>
-      <div id="stakingContent"></div>
-    </section>
+    <!-- Staking -->
+<section id="staking" class="page-section max-w-md mx-auto text-center">
+  <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="staking_title">
+    Staking KN
+  </h2>
+  <div id="stakingContent"></div>
+</section>
 
     <!-- About -->
 <section id="about" class="page-section max-w-2xl mx-auto text-center">
@@ -311,18 +314,18 @@ function switchNetwork(mode){
 function loadStakingForm(){
   document.getElementById('stakingContent').innerHTML = `
     <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
-      <label class="block mb-2 font-semibold">Jumlah KN untuk Staking</label>
+      <label class="block mb-2 font-semibold" data-i18n="staking_input_label">Jumlah KN untuk Staking</label>
       <input type="number" id="stakeAmount" placeholder="0.0" class="w-full p-3 border border-gray-600 rounded-xl mb-4 bg-gray-900 text-white" />
-      <button id="stakeBtn" onclick="doStake()" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 glow-hover mb-2">Stake</button>
-      <button id="withdrawBtn" onclick="doWithdraw()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-500 glow-hover">Withdraw</button>
-      <p class="mt-4">Total Staked: <span id="totalStaked">0 KN</span></p>
-      <p class="mt-2">Pending Reward: <span id="pendingReward">0 KN</span></p>
-      <button id="claimRewardBtn" onclick="claimReward()" class="w-full mt-3 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 glow-hover">Claim Reward</button>
+      <button id="stakeBtn" onclick="doStake()" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 glow-hover mb-2" data-i18n="staking_btn_stake">Stake</button>
+      <button id="withdrawBtn" onclick="doWithdraw()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-500 glow-hover" data-i18n="staking_btn_withdraw">Withdraw</button>
+      <p class="mt-4"><span data-i18n="staking_total">Total Staked</span>: <span id="totalStaked">0 KN</span></p>
+      <p class="mt-2"><span data-i18n="staking_reward">Pending Reward</span>: <span id="pendingReward">0 KN</span></p>
+      <button id="claimRewardBtn" onclick="claimReward()" class="w-full mt-3 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 glow-hover" data-i18n="staking_btn_claim">Claim Reward</button>
     </div>
     <div class="bg-gray-800 rounded-xl shadow p-6 mt-6 glow-hover">
-      <h3 class="text-lg font-bold mb-3 text-yellow-400">Faucet</h3>
-      <p class="text-gray-300 mb-3">Dapatkan token KN gratis untuk uji coba.</p>
-      <button id="faucetBtn" onclick="claimFaucet()" class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 glow-hover">Claim Faucet</button>
+      <h3 class="text-lg font-bold mb-3 text-yellow-400" data-i18n="faucet_title">Faucet</h3>
+      <p class="text-gray-300 mb-3" data-i18n="faucet_desc">Dapatkan token KN gratis untuk uji coba.</p>
+      <button id="faucetBtn" onclick="claimFaucet()" class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 glow-hover" data-i18n="faucet_btn">Claim Faucet</button>
     </div>
   `;
 }
@@ -641,6 +644,17 @@ const translations = {
     faq_a3: "KenariCoin bisa didapat melalui faucet (testnet), airdrop komunitas, dan nantinya listing di DEX.",
     faq_q4: "❓ Apakah ada fitur staking?",
     faq_a4: "Ya ✅. Staking tersedia di testnet dan akan hadir di mainnet segera."
+    staking_title: "Staking KN",
+  staking_input_label: "Jumlah KN untuk Staking",
+  staking_btn_stake: "Stake",
+  staking_btn_withdraw: "Withdraw",
+  staking_total: "Total Staked",
+  staking_reward: "Reward Tertunda",
+  staking_btn_claim: "Klaim Reward",
+  faucet_title: "Faucet",
+  faucet_desc: "Dapatkan token KN gratis untuk uji coba.",
+  faucet_btn: "Klaim Faucet"
+},
   },
   en: {
     home: "Home",
@@ -664,6 +678,16 @@ const translations = {
     faq_a3: "KenariCoin can be obtained through faucet (testnet), community airdrops, and future DEX listings.",
     faq_q4: "❓ Is staking available?",
     faq_a4: "Yes ✅. Staking is available on testnet and will soon launch on mainnet."
+    staking_title: "Stake KN",
+  staking_input_label: "Amount of KN to Stake",
+  staking_btn_stake: "Stake",
+  staking_btn_withdraw: "Withdraw",
+  staking_total: "Total Staked",
+  staking_reward: "Pending Reward",
+  staking_btn_claim: "Claim Reward",
+  faucet_title: "Faucet",
+  faucet_desc: "Get free KN tokens for testing.",
+  faucet_btn: "Claim Faucet"
   }
 };
 
