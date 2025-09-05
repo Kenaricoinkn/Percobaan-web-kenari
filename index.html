@@ -614,34 +614,13 @@ if(window.ethereum){
   });
   window.ethereum.on('chainChanged', () => { setTimeout(()=>location.reload(), 200); });
 }
-// ========== TRANSLATIONS ==========
+// ========================
+<script>
+// ========================
+// Multi-language Support
+// ========================
 const translations = {
-    id: {
-  about_title: "Tentang KenariCoin",
-  about_desc: "KenariCoin (KN) adalah aset digital berbasis BEP-20 ... [isi full seperti di atas]",
-  faq_title: "FAQ",
-  faq_q1: "❓ Apa itu KenariCoin?",
-  faq_a1: "KenariCoin (KN) adalah token BEP-20 ...",
-  faq_q2: "❓ Apa keunggulan KenariCoin?",
-  faq_a2: "🔹 Transaksi cepat & biaya rendah ...",
-  faq_q3: "❓ Bagaimana cara mendapatkan KenariCoin?",
-  faq_a3: "Saat ini, KenariCoin bisa diperoleh ...",
-  faq_q4: "❓ Apakah ada fitur staking?",
-  faq_a4: "Ya ✅. Staking sudah tersedia ..."
-},
-en: {
-  about_title: "About KenariCoin",
-  about_desc: "KenariCoin (KN) is a BEP-20 digital asset ... [English version]",
-  faq_title: "FAQ",
-  faq_q1: "❓ What is KenariCoin?",
-  faq_a1: "KenariCoin (KN) is a BEP-20 token ...",
-  faq_q2: "❓ What are the advantages of KenariCoin?",
-  faq_a2: "🔹 Fast & low-cost transactions ...",
-  faq_q3: "❓ How to get KenariCoin?",
-  faq_a3: "Currently available via faucet (testnet) ...",
-  faq_q4: "❓ Is staking available?",
-  faq_a4: "Yes ✅. Staking is already available on testnet ..."
-}
+  id: {
     home: "Beranda",
     wallet: "Dompet",
     staking: "Staking",
@@ -651,7 +630,18 @@ en: {
     welcome: "Selamat Datang di KenariCoin",
     connect: "Hubungkan Wallet",
     contract: "📜 Alamat Kontrak",
-    wallet_balance: "Saldo Wallet"
+    wallet_balance: "Saldo Wallet",
+    about_title: "Tentang KenariCoin",
+    about_desc: "KenariCoin (KN) adalah aset digital berbasis BEP-20 yang berjalan di jaringan BNB Smart Chain. Didesain untuk mendukung ekosistem DeFi, KenariCoin hadir sebagai jembatan antara komunitas, inovasi finansial, dan adopsi blockchain. Dengan suplai terbatas, mekanisme staking yang menguntungkan, serta dukungan komunitas, KenariCoin menjadi pondasi ekosistem keuangan terdesentralisasi yang inklusif dan berkelanjutan.",
+    faq_title: "FAQ",
+    faq_q1: "❓ Apa itu KenariCoin?",
+    faq_a1: "KenariCoin (KN) adalah token BEP-20 di jaringan BNB Smart Chain yang dirancang untuk menghadirkan solusi keuangan terdesentralisasi (DeFi) yang mudah diakses dan transparan.",
+    faq_q2: "❓ Apa keunggulan KenariCoin?",
+    faq_a2: "🔹 Transaksi cepat & biaya rendah\n🔹 Staking & yield farming\n🔹 Komunitas aktif\n🔹 Potensi pertumbuhan jangka panjang",
+    faq_q3: "❓ Bagaimana cara mendapatkan KenariCoin?",
+    faq_a3: "KenariCoin bisa didapat melalui faucet (testnet), airdrop komunitas, dan nantinya listing di DEX.",
+    faq_q4: "❓ Apakah ada fitur staking?",
+    faq_a4: "Ya ✅. Staking tersedia di testnet dan akan hadir di mainnet segera."
   },
   en: {
     home: "Home",
@@ -663,19 +653,64 @@ en: {
     welcome: "Welcome to KenariCoin",
     connect: "Connect Wallet",
     contract: "📜 Contract Address",
-    wallet_balance: "Wallet Balance"
+    wallet_balance: "Wallet Balance",
+    about_title: "About KenariCoin",
+    about_desc: "KenariCoin (KN) is a BEP-20 digital asset on the BNB Smart Chain. Designed to power the DeFi ecosystem, KenariCoin bridges communities, financial innovation, and blockchain adoption. With a limited supply, rewarding staking mechanisms, and strong community support, KenariCoin aims to be the foundation of a sustainable and inclusive decentralized financial system.",
+    faq_title: "FAQ",
+    faq_q1: "❓ What is KenariCoin?",
+    faq_a1: "KenariCoin (KN) is a BEP-20 token on BNB Smart Chain built to provide easy, secure, and transparent access to decentralized finance (DeFi).",
+    faq_q2: "❓ What are the advantages of KenariCoin?",
+    faq_a2: "🔹 Fast & low-cost transactions\n🔹 Staking & yield farming support\n🔹 Strong community\n🔹 Long-term growth potential",
+    faq_q3: "❓ How to get KenariCoin?",
+    faq_a3: "KenariCoin can be obtained through faucet (testnet), community airdrops, and future DEX listings.",
+    faq_q4: "❓ Is staking available?",
+    faq_a4: "Yes ✅. Staking is available on testnet and will soon launch on mainnet."
   }
 };
 
-function switchLang(lang){
+// ========================
+// Language Switcher
+// ========================
+function switchLang(lang) {
   localStorage.setItem("lang", lang);
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
-    if(translations[lang] && translations[lang][key]) {
+    if (translations[lang] && translations[lang][key]) {
       el.textContent = translations[lang][key];
     }
   });
 }
+
+// ========================
+// Load Saved Language
+// ========================
+document.addEventListener("DOMContentLoaded", () => {
+  const savedLang = localStorage.getItem("lang") || "id";
+  document.getElementById("langSwitcher").value = savedLang;
+  switchLang(savedLang);
+});
+</script>
+// ========================
+// Language Switcher
+// ========================
+function switchLang(lang) {
+  localStorage.setItem("lang", lang);
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (translations[lang] && translations[lang][key]) {
+      el.textContent = translations[lang][key];
+    }
+  });
+}
+
+// ========================
+// Load Saved Language
+// ========================
+document.addEventListener("DOMContentLoaded", () => {
+  const savedLang = localStorage.getItem("lang") || "id";
+  document.getElementById("langSwitcher").value = savedLang;
+  switchLang(savedLang);
+});
 // ========== INIT ==========
 window.addEventListener('DOMContentLoaded', () => {
   try {
