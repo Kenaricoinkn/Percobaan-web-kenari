@@ -589,16 +589,6 @@ async function updateReward(){
   }
 }
 
-// ==== PROVIDER HELPER ====
-// Selalu pastikan ada provider, kalau belum ada fallback ke testnet RPC
-function getSafeProvider() {
-  if (typeof provider !== "undefined" && provider) {
-    return provider; // kalau sudah di-set oleh switchNetwork / wallet connect
-  }
-  // fallback default ke testnet RPC
-  return new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
-}
-
 // ========== LEADERBOARD ==========
 async function loadPublicLeaderboard() {
   const tbody = document.getElementById("publicLeaderboard");
@@ -612,8 +602,11 @@ async function loadPublicLeaderboard() {
     return;
   }
 
-  // ✅ pakai provider aman (selalu ada)
-  const readProvider = getSafeProvider();
+  // ✅ pakai provider dari switchNetwork, fallback testnet kalau undefined
+  const readProvider = (typeof provider !== "undefined" && provider)
+    ? provider
+    : new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
+
   const contract = new ethers.Contract(
     STAKING_CONTRACT,
     [
