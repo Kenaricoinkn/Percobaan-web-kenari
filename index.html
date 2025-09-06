@@ -116,7 +116,15 @@
 
 <!-- Leaderboard -->
 <section id="leaderboard" class="page-section max-w-4xl mx-auto text-center">
-  <h2 class="text-2xl font-bold mb-6 text-yellow-400">🏆 Top 10 Staker KenariCoin</h2>
+  <h2 class="text-2xl font-bold mb-6 text-yellow-400">🏆 Top Staker KenariCoin</h2>
+
+  <!-- Search Bar -->
+  <div class="mb-4">
+    <input id="searchWallet" type="text" placeholder="🔍 Cari wallet address..."
+           class="w-full md:w-1/2 p-2 rounded bg-gray-800 text-white border border-gray-600 text-center" 
+           oninput="renderLeaderboard()" />
+  </div>
+
   <table class="w-full text-left border border-gray-700 rounded-xl overflow-hidden">
     <thead class="bg-gray-800 text-yellow-400">
       <tr>
@@ -129,6 +137,11 @@
       <tr><td colspan="3" class="p-3 text-center">⟳ Loading leaderboard...</td></tr>
     </tbody>
   </table>
+
+  <button id="toggleLeaderboard" onclick="toggleLeaderboardView()" 
+          class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow">
+    View All
+  </button>
 </section>
 
     <!-- About -->
@@ -300,7 +313,7 @@ function formatToken(amountBigNumber, decimals){
 function switchNetwork(mode){
   if(mode === 'testnet'){
     KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
-    STAKING_CONTRACT = "0x39e9a1b1d60AB184c3A24d664a0d7D599D4ACe78";
+    STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5";
     FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";
     BSC_CHAIN_ID = "0x61"; // BSC Testnet
     loadStakingForm();
@@ -564,6 +577,9 @@ async function updateReward(){
 }
 
 // ========== LEADERBOARD PUBLIK ==========
+let allStakerData = [];
+let showAll = false;
+
 async function loadPublicLeaderboard() {
   const tbody = document.getElementById("publicLeaderboard");
   if (!tbody) return;
@@ -586,36 +602,77 @@ async function loadPublicLeaderboard() {
 
   try {
     const stakers = await contract.getAllStakers();
-    let stakerData = [];
+    allStakerData = [];
     for (let addr of stakers) {
       const amount = await contract.getStaked(addr);
-      stakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+      allStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
     }
 
-    stakerData.sort((a, b) => b.amount - a.amount);
-    const top10 = stakerData.slice(0, 10);
+    allStakerData.sort((a, b) => b.amount - a.amount);
 
-    tbody.innerHTML = "";
-    top10.forEach((item, i) => {
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">${i + 1}</td>
-          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
-          <td class="p-2">${item.amount} KN</td>
-        </tr>`;
-    });
+    renderLeaderboard();
   } catch (err) {
     console.error("Leaderboard error", err);
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal memuat data</td></tr>`;
   }
 }
 
-// load pertama kali + auto refresh tiap 5 menit
+function renderLeaderboard() {
+  const tbody = document.getElementById("publicLeaderboard");
+  if (!tbody) return;
+
+  let data = showAll ? allStakerData : allStakerData.slice(0, 10);
+
+  // Filter by search input
+  const searchInput = document.getElementById("searchWallet")?.value.trim().toLowerCase();
+  if (searchInput) {
+    data = allStakerData.filter(item => item.addr.toLowerCase().includes(searchInput));
+  }
+
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Wallet tidak ditemukan</td></tr>`;
+    return;
+  }
+
+  data.forEach((item, i) => {
+    let medal = "";
+    let rowClass = "";
+
+    if (i === 0) { medal = "🥇"; rowClass = "bg-yellow-900 text-yellow-300 font-bold"; }
+    else if (i === 1) { medal = "🥈"; rowClass = "bg-gray-800 text-gray-300 font-semibold"; }
+    else if (i === 2) { medal = "🥉"; rowClass = "bg-orange-900 text-orange-300 font-semibold"; }
+    else { rowClass = "bg-gray-900"; }
+
+    tbody.innerHTML += `
+      <tr class="${rowClass}">
+        <td class="p-2">${medal || i + 1}</td>
+        <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
+        <td class="p-2">${item.amount} KN</td>
+      </tr>`;
+  });
+
+  const btn = document.getElementById("toggleLeaderboard");
+  if (btn && !searchInput) {
+    btn.innerText = showAll ? "View Top 10" : "View All";
+    btn.disabled = false;
+  } else if (btn && searchInput) {
+    btn.innerText = "Search Mode";
+    btn.disabled = true;
+  }
+}
+
+function toggleLeaderboardView() {
+  showAll = !showAll;
+  renderLeaderboard();
+}
+
+// Auto refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
   loadPublicLeaderboard();
-  setInterval(loadPublicLeaderboard, 5 * 60 * 1000);
+  setInterval(loadPublicLeaderboard, 60 * 1000);
 });
-
 // ========== FAUCET (improved error messages & cooldown handling) ==========
 async function claimFaucet(){
   const btn = document.getElementById('faucetBtn');
