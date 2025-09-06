@@ -40,7 +40,6 @@
   <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
   <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
 <a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400">Leaderboard</a>
-</div>
 
   <!-- RIGHT: Network + Language + Connect -->
   <div class="flex items-center gap-2 flex-shrink-0">
@@ -74,6 +73,7 @@
       <a href="#" onclick="navigate('about'); toggleMenu(false)" class="block hover:text-yellow-400">About</a>
       <a href="#" onclick="navigate('contact'); toggleMenu(false)" class="block hover:text-yellow-400">Contact</a>
       <a href="#" onclick="navigate('faq'); toggleMenu(false)" class="block hover:text-yellow-400">FAQ</a>
+<a href="#" onclick="navigate('leaderboard'); toggleMenu(false)" class="block hover:text-yellow-400">Leaderboard</a>
     </div>
   </nav>
 
@@ -112,24 +112,23 @@
   </h2>
   <div id="stakingContent"></div>
 
-  <!-- Leaderboard Publik -->
-  <div class="mt-10">
-    <h3 class="text-xl font-bold mb-4 text-yellow-400">🏆 Top 10 Staker</h3>
-    <table class="w-full text-left border border-gray-700 rounded-xl overflow-hidden">
-      <thead class="bg-gray-800 text-yellow-400">
-        <tr>
-          <th class="p-2">Rank</th>
-          <th class="p-2">Wallet</th>
-          <th class="p-2">Staked KN</th>
-        </tr>
-      </thead>
-      <tbody id="publicLeaderboard" class="bg-gray-900 text-gray-300">
-        <tr>
-          <td colspan="3" class="p-3 text-center">⟳ Loading leaderboard...</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+_______LEADERBOARD________
+<section id="leaderboard" class="page-section max-w-4xl mx-auto text-center">
+  <h2 class="text-2xl font-bold mb-6 text-yellow-400">🏆 Top 10 Staker KenariCoin</h2>
+  <table class="w-full text-left border border-gray-700 rounded-xl overflow-hidden">
+    <thead class="bg-gray-800 text-yellow-400">
+      <tr>
+        <th class="p-2">Rank</th>
+        <th class="p-2">Wallet</th>
+        <th class="p-2">Staked KN</th>
+      </tr>
+    </thead>
+    <tbody id="publicLeaderboard" class="bg-gray-900 text-gray-300">
+      <tr>
+        <td colspan="3" class="p-3 text-center">⟳ Loading leaderboard...</td>
+      </tr>
+    </tbody>
+  </table>
 </section>
 
     <!-- About -->
