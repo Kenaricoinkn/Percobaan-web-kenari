@@ -39,6 +39,7 @@
   <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
   <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
   <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
+<a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400">Leaderboard</a>
 </div>
 
   <!-- RIGHT: Network + Language + Connect -->
@@ -103,13 +104,32 @@
       </div>
     </section>
 
-    <!-- Staking -->
-    <!-- Staking -->
+
+   <!-- Staking -->
 <section id="staking" class="page-section max-w-md mx-auto text-center">
   <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="staking_title">
     Staking KN
   </h2>
   <div id="stakingContent"></div>
+
+  <!-- Leaderboard Publik -->
+  <div class="mt-10">
+    <h3 class="text-xl font-bold mb-4 text-yellow-400">🏆 Top 10 Staker</h3>
+    <table class="w-full text-left border border-gray-700 rounded-xl overflow-hidden">
+      <thead class="bg-gray-800 text-yellow-400">
+        <tr>
+          <th class="p-2">Rank</th>
+          <th class="p-2">Wallet</th>
+          <th class="p-2">Staked KN</th>
+        </tr>
+      </thead>
+      <tbody id="publicLeaderboard" class="bg-gray-900 text-gray-300">
+        <tr>
+          <td colspan="3" class="p-3 text-center">⟳ Loading leaderboard...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
     <!-- About -->
@@ -543,6 +563,59 @@ async function updateReward(){
     console.error('updateReward error', err);
   }
 }
+
+// ========== LEADERBOARD PUBLIK ==========
+async function loadPublicLeaderboard() {
+  const tbody = document.getElementById("publicLeaderboard");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
+
+  if (!STAKING_CONTRACT) {
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">❌ Staking belum aktif di jaringan ini</td></tr>`;
+    return;
+  }
+
+  const contract = new ethers.Contract(
+    STAKING_CONTRACT,
+    [
+      "function getAllStakers() view returns (address[])",
+      "function getStaked(address user) view returns (uint256)"
+    ],
+    provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
+  );
+
+  try {
+    const stakers = await contract.getAllStakers();
+    let stakerData = [];
+    for (let addr of stakers) {
+      const amount = await contract.getStaked(addr);
+      stakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+    }
+
+    stakerData.sort((a, b) => b.amount - a.amount);
+    const top10 = stakerData.slice(0, 10);
+
+    tbody.innerHTML = "";
+    top10.forEach((item, i) => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">${i + 1}</td>
+          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
+          <td class="p-2">${item.amount} KN</td>
+        </tr>`;
+    });
+  } catch (err) {
+    console.error("Leaderboard error", err);
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal memuat data</td></tr>`;
+  }
+}
+
+// load pertama kali + auto refresh tiap 5 menit
+document.addEventListener("DOMContentLoaded", () => {
+  loadPublicLeaderboard();
+  setInterval(loadPublicLeaderboard, 5 * 60 * 1000);
+});
 
 // ========== FAUCET (improved error messages & cooldown handling) ==========
 async function claimFaucet(){
