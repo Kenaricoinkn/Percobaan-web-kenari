@@ -596,13 +596,11 @@ async function loadPublicLeaderboard() {
 
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
 
-  // Kalau kontrak kosong (misal di mainnet)
   if (!STAKING_CONTRACT) {
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Leaderboard belum tersedia di jaringan ini</td></tr>`;
     return;
   }
 
-  // Pakai provider global dari switchNetwork atau fallback testnet
   const readProvider = (typeof provider !== "undefined" && provider)
     ? provider
     : new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
@@ -619,19 +617,20 @@ async function loadPublicLeaderboard() {
   try {
     const stakers = await contract.getAllStakers();
 
+    if (!stakers || stakers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet yang staking</td></tr>`;
+      return;
+    }
+
     let stakerData = [];
     for (let addr of stakers) {
       const amount = await contract.getStaked(addr);
       const formatted = ethers.utils.formatUnits(amount, 18);
       const raw = parseFloat(formatted);
 
-      // 🚫 skip kalau stake 0
       if (raw <= 0) continue;
 
-      const displayAmount = raw.toLocaleString("en-US", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 6
-      });
+      const displayAmount = raw.toFixed(6).replace(/\.?0+$/, "");
 
       stakerData.push({ addr, amount: displayAmount, raw });
     }
@@ -641,7 +640,6 @@ async function loadPublicLeaderboard() {
       return;
     }
 
-    // Urutkan dari terbesar
     stakerData.sort((a, b) => b.raw - a.raw);
     const top10 = stakerData.slice(0, 10);
 
@@ -654,7 +652,7 @@ async function loadPublicLeaderboard() {
 
       tbody.innerHTML += `
         <tr>
-          <td class="p-2">${medal || i + 1}</td>
+          <td class="p-2">${medal || "#" + (i + 1)}</td>
           <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
           <td class="p-2">${item.amount} KN</td>
         </tr>`;
@@ -666,7 +664,6 @@ async function loadPublicLeaderboard() {
   }
 }
 
-// Auto load + refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
   loadPublicLeaderboard();
   setInterval(loadPublicLeaderboard, 60 * 1000);
