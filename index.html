@@ -329,9 +329,14 @@ function switchNetwork(mode){
     document.getElementById('networkSwitcher').value = 'mainnet';
   }
 
-  // Refresh tampilan staking & leaderboard setiap ganti network
-  loadStakingForm();
-  loadPublicLeaderboard();
+ // Refresh tampilan staking & leaderboard setiap ganti network
+if (STAKING_CONTRACT) {
+  loadStakingForm();          // ✅ kalau kontrak ada (contoh: testnet)
+} else {
+  loadStakingUnavailable();   // 🚧 kalau kontrak kosong (contoh: mainnet)
+}
+
+loadPublicLeaderboard();
 
   // ✅ Tambahan penting: update info kontrak + saldo user
   const el = document.getElementById('contractAddr');
@@ -617,31 +622,37 @@ async function loadPublicLeaderboard() {
     }
 
     let stakerData = [];
-    for (let addr of stakers) {
-      const amount = await contract.getStaked(addr);
-      stakerData.push({
-        addr,
-        amount: parseFloat(ethers.utils.formatUnits(amount, 18))
-      });
-    }
+for (let addr of stakers) {
+  const amount = await contract.getStaked(addr);
+  const formatted = ethers.utils.formatUnits(amount, 18);
 
-    stakerData.sort((a, b) => b.amount - a.amount);
-    const top10 = stakerData.slice(0, 10);
+  // ✅ Format angka biar rapi & gak scientific notation
+  const displayAmount = parseFloat(formatted).toLocaleString("en-US", { 
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 6 
+  });
 
-    tbody.innerHTML = "";
-    top10.forEach((item, i) => {
-      let medal = "";
-      if (i === 0) medal = "🥇";
-      else if (i === 1) medal = "🥈";
-      else if (i === 2) medal = "🥉";
+  stakerData.push({ addr, amount: displayAmount, raw: parseFloat(formatted) });
+}
 
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">${medal || i + 1}</td>
-          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
-          <td class="p-2">${item.amount} KN</td>
-        </tr>`;
-    });
+// Urutkan dari terbesar ke terkecil pakai nilai asli
+stakerData.sort((a, b) => b.raw - a.raw);
+const top10 = stakerData.slice(0, 10);
+
+tbody.innerHTML = "";
+top10.forEach((item, i) => {
+  let medal = "";
+  if (i === 0) medal = "🥇";
+  else if (i === 1) medal = "🥈";
+  else if (i === 2) medal = "🥉";
+
+  tbody.innerHTML += `
+    <tr>
+      <td class="p-2">${medal || i + 1}</td>
+      <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
+      <td class="p-2">${item.amount} KN</td>
+    </tr>`;
+});
   } catch (err) {
     console.error("Leaderboard error", err);
     tbody.innerHTML =
