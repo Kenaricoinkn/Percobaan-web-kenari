@@ -589,7 +589,16 @@ async function updateReward(){
   }
 }
 
-// ========== LEADERBOARD PUBLIK ==========
+// ==== PROVIDER HELPER ====
+// Selalu pastikan ada provider, kalau belum ada fallback ke testnet RPC
+function getSafeProvider() {
+  if (typeof provider !== "undefined" && provider) {
+    return provider; // kalau sudah di-set oleh switchNetwork / wallet connect
+  }
+  // fallback default ke testnet RPC
+  return new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
+}
+
 // ========== LEADERBOARD ==========
 async function loadPublicLeaderboard() {
   const tbody = document.getElementById("publicLeaderboard");
@@ -597,20 +606,21 @@ async function loadPublicLeaderboard() {
 
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
 
-  // kalau kontrak staking kosong (contoh: mainnet belum ada)
+  // ✅ kalau kontrak staking kosong (contoh: mainnet)
   if (!STAKING_CONTRACT) {
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada kontrak staking di jaringan ini</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Leaderboard belum tersedia di jaringan ini</td></tr>`;
     return;
   }
 
-  // kontrak staking sesuai provider dari switchNetwork()
+  // ✅ pakai provider aman (selalu ada)
+  const readProvider = getSafeProvider();
   const contract = new ethers.Contract(
     STAKING_CONTRACT,
     [
       "function getAllStakers() view returns (address[])",
       "function getStaked(address user) view returns (uint256)"
     ],
-    provider // ✅ fix: pakai provider global, bukan default mainnet
+    readProvider
   );
 
   try {
@@ -622,37 +632,37 @@ async function loadPublicLeaderboard() {
     }
 
     let stakerData = [];
-for (let addr of stakers) {
-  const amount = await contract.getStaked(addr);
-  const formatted = ethers.utils.formatUnits(amount, 18);
+    for (let addr of stakers) {
+      const amount = await contract.getStaked(addr);
+      const formatted = ethers.utils.formatUnits(amount, 18);
 
-  // ✅ Format angka biar rapi & gak scientific notation
-  const displayAmount = parseFloat(formatted).toLocaleString("en-US", { 
-    minimumFractionDigits: 0, 
-    maximumFractionDigits: 6 
-  });
+      // ✅ Format angka biar rapi
+      const displayAmount = parseFloat(formatted).toLocaleString("en-US", { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 6 
+      });
 
-  stakerData.push({ addr, amount: displayAmount, raw: parseFloat(formatted) });
-}
+      stakerData.push({ addr, amount: displayAmount, raw: parseFloat(formatted) });
+    }
 
-// Urutkan dari terbesar ke terkecil pakai nilai asli
-stakerData.sort((a, b) => b.raw - a.raw);
-const top10 = stakerData.slice(0, 10);
+    // Urutkan dari terbesar ke terkecil
+    stakerData.sort((a, b) => b.raw - a.raw);
+    const top10 = stakerData.slice(0, 10);
 
-tbody.innerHTML = "";
-top10.forEach((item, i) => {
-  let medal = "";
-  if (i === 0) medal = "🥇";
-  else if (i === 1) medal = "🥈";
-  else if (i === 2) medal = "🥉";
+    tbody.innerHTML = "";
+    top10.forEach((item, i) => {
+      let medal = "";
+      if (i === 0) medal = "🥇";
+      else if (i === 1) medal = "🥈";
+      else if (i === 2) medal = "🥉";
 
-  tbody.innerHTML += `
-    <tr>
-      <td class="p-2">${medal || i + 1}</td>
-      <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
-      <td class="p-2">${item.amount} KN</td>
-    </tr>`;
-});
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">${medal || i + 1}</td>
+          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
+          <td class="p-2">${item.amount} KN</td>
+        </tr>`;
+    });
   } catch (err) {
     console.error("Leaderboard error", err);
     tbody.innerHTML =
@@ -660,9 +670,8 @@ top10.forEach((item, i) => {
   }
 }
 
-// Default load + auto refresh 1 menit
+// Default load + auto refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
-  switchNetwork("testnet"); // 🔥 default ke testnet
   loadPublicLeaderboard();
   setInterval(loadPublicLeaderboard, 60 * 1000);
 });
