@@ -17,31 +17,33 @@
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
 
   <!-- NAVBAR -->
-  <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
-    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-  <!-- LEFT: Hamburger + Logo + Nama -->
-  <div class="flex items-center gap-3">
-  <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
-  <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
+<nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
+  <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+    
+    <!-- LEFT: Hamburger + Logo + Nama -->
+    <div class="flex items-center gap-3">
+      <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+      <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
 
-  <!-- Singkatan untuk HP -->
-  <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap block md:hidden">KN</span>
+      <!-- Singkatan untuk HP -->
+      <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap block md:hidden">KN</span>
 
-  <!-- Nama lengkap untuk Desktop -->
-  <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap hidden md:block">KenariCoin</span>
-</div>
+      <!-- Nama lengkap untuk Desktop -->
+      <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap hidden md:block">KenariCoin</span>
+    </div>
 
-  <!-- CENTER: Nav Links (desktop only) -->
-  <div id="navLinks" class="hidden md:flex space-x-6">
-  <a href="#" onclick="navigate('home')" class="hover:text-yellow-400" data-i18n="home">Home</a>
-  <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400" data-i18n="wallet">Wallet</a>
-  <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400" data-i18n="staking">Staking</a>
-  <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
-  <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
-  <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
-<a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400">Leaderboard</a>
+    <!-- CENTER: Nav Links (desktop only) -->
+    <div id="navLinks" class="hidden md:flex space-x-6">
+      <a href="#" onclick="navigate('home')" class="hover:text-yellow-400" data-i18n="home">Home</a>
+      <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400" data-i18n="wallet">Wallet</a>
+      <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400" data-i18n="staking">Staking</a>
+      <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
+      <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
+      <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
+      <a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400">Leaderboard</a>
+    </div>
 
-  <!-- RIGHT: Network + Language + Connect -->
+    <!-- RIGHT: Network + Language + Connect -->
   <div class="flex items-center gap-2 flex-shrink-0">
     <!-- Network Switcher -->
     <select id="networkSwitcher" onchange="switchNetwork(this.value)"
@@ -66,16 +68,17 @@
   </div>
 </div>
 
-    <div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
-      <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
-      <a href="#" onclick="navigate('wallet'); toggleMenu(false)" class="block hover:text-yellow-400">Wallet</a>
-      <a href="#" onclick="navigate('staking'); toggleMenu(false)" class="block hover:text-yellow-400">Staking</a>
-      <a href="#" onclick="navigate('about'); toggleMenu(false)" class="block hover:text-yellow-400">About</a>
-      <a href="#" onclick="navigate('contact'); toggleMenu(false)" class="block hover:text-yellow-400">Contact</a>
-      <a href="#" onclick="navigate('faq'); toggleMenu(false)" class="block hover:text-yellow-400">FAQ</a>
-<a href="#" onclick="navigate('leaderboard'); toggleMenu(false)" class="block hover:text-yellow-400">Leaderboard</a>
-    </div>
-  </nav>
+  <!-- MOBILE MENU -->
+  <div id="mobileMenu" class="md:hidden hidden absolute left-0 right-0 top-16 bg-gray-900 border-t border-gray-700 px-4 py-3 space-y-2 w-full">
+    <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
+    <a href="#" onclick="navigate('wallet'); toggleMenu(false)" class="block hover:text-yellow-400">Wallet</a>
+    <a href="#" onclick="navigate('staking'); toggleMenu(false)" class="block hover:text-yellow-400">Staking</a>
+    <a href="#" onclick="navigate('about'); toggleMenu(false)" class="block hover:text-yellow-400">About</a>
+    <a href="#" onclick="navigate('contact'); toggleMenu(false)" class="block hover:text-yellow-400">Contact</a>
+    <a href="#" onclick="navigate('faq'); toggleMenu(false)" class="block hover:text-yellow-400">FAQ</a>
+    <a href="#" onclick="navigate('leaderboard'); toggleMenu(false)" class="block hover:text-yellow-400">Leaderboard</a>
+  </div>
+</nav>
 
   <!-- PAGES -->
 <main class="flex-grow px-4 pt-24 pb-10">
