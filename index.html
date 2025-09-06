@@ -311,37 +311,45 @@ function formatToken(amountBigNumber, decimals){
 
 // ========== SWITCH NETWORK ==========
 function switchNetwork(mode){
+  currentNetwork = mode;
+
   if(mode === 'testnet'){
-    KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
-    STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5";
-    FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";
+    KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";  // Token KN testnet
+    STAKING_CONTRACT = "0xD9f344e8082c374A10e833fd4AA9fA2209eaE1a5"; // Staking kontrak testnet
+    FAUCET_CONTRACT = "0x261b3d34833C1Fc3253A036E8271528439f3310d";  // Faucet testnet
     BSC_CHAIN_ID = "0x61"; // BSC Testnet
-    loadStakingForm();
+    provider = new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
     document.getElementById('networkSwitcher').value = 'testnet';
-  } else {
-    KN = "0x1390f63AF92448c46368443496a2bfc1469558de";
-    STAKING_CONTRACT = "";
+  } else if(mode === 'mainnet'){
+    KN = "0x1390f63AF92448c46368443496a2bfc1469558de"; // Token KN mainnet
+    STAKING_CONTRACT = ""; // ❌ belum ada kontrak staking di mainnet
     FAUCET_CONTRACT = "";
     BSC_CHAIN_ID = "0x38"; // BSC Mainnet
-    loadStakingUnavailable();
+    provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org");
     document.getElementById('networkSwitcher').value = 'mainnet';
   }
 
+  // Refresh tampilan staking & leaderboard setiap ganti network
+  loadStakingForm();
+  loadPublicLeaderboard();
+
+  // ✅ Tambahan penting: update info kontrak + saldo user
   const el = document.getElementById('contractAddr');
   if(el) el.innerText = KN || '(No token address)';
 
   if(userAddress && provider){
     ensureWalletOnSelectedChain().finally(()=> {
       updateBalances();
-      if(BSC_CHAIN_ID === '0x61'){ updateStaked(); updateReward(); }
-      else {
+      if(BSC_CHAIN_ID === '0x61'){ 
+        updateStaked(); 
+        updateReward(); 
+      } else {
         document.getElementById('totalStaked') && (document.getElementById('totalStaked').innerText = '0 KN');
         document.getElementById('pendingReward') && (document.getElementById('pendingReward').innerText = '0 KN');
       }
     });
   }
 }
-
 // ========== STAKING UI ==========
 function loadStakingForm(){
   document.getElementById('stakingContent').innerHTML = `
@@ -577,99 +585,73 @@ async function updateReward(){
 }
 
 // ========== LEADERBOARD PUBLIK ==========
-let allStakerData = [];
-let showAll = false;
-
+// ========== LEADERBOARD ==========
 async function loadPublicLeaderboard() {
   const tbody = document.getElementById("publicLeaderboard");
   if (!tbody) return;
 
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
 
+  // kalau kontrak staking kosong (contoh: mainnet belum ada)
   if (!STAKING_CONTRACT) {
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">❌ Staking belum aktif di jaringan ini</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada kontrak staking di jaringan ini</td></tr>`;
     return;
   }
 
+  // kontrak staking sesuai provider dari switchNetwork()
   const contract = new ethers.Contract(
     STAKING_CONTRACT,
     [
       "function getAllStakers() view returns (address[])",
       "function getStaked(address user) view returns (uint256)"
     ],
-    provider || new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org")
+    provider // ✅ fix: pakai provider global, bukan default mainnet
   );
 
   try {
     const stakers = await contract.getAllStakers();
-    allStakerData = [];
-    for (let addr of stakers) {
-      const amount = await contract.getStaked(addr);
-      allStakerData.push({ addr, amount: parseFloat(ethers.utils.formatUnits(amount, 18)) });
+
+    if (stakers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet yang staking di jaringan ini</td></tr>`;
+      return;
     }
 
-    allStakerData.sort((a, b) => b.amount - a.amount);
+    let stakerData = [];
+    for (let addr of stakers) {
+      const amount = await contract.getStaked(addr);
+      stakerData.push({
+        addr,
+        amount: parseFloat(ethers.utils.formatUnits(amount, 18))
+      });
+    }
 
-    renderLeaderboard();
+    stakerData.sort((a, b) => b.amount - a.amount);
+    const top10 = stakerData.slice(0, 10);
+
+    tbody.innerHTML = "";
+    top10.forEach((item, i) => {
+      let medal = "";
+      if (i === 0) medal = "🥇";
+      else if (i === 1) medal = "🥈";
+      else if (i === 2) medal = "🥉";
+
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">${medal || i + 1}</td>
+          <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
+          <td class="p-2">${item.amount} KN</td>
+        </tr>`;
+    });
   } catch (err) {
     console.error("Leaderboard error", err);
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal memuat data</td></tr>`;
+    tbody.innerHTML =
+      `<tr><td colspan="3" class="p-3 text-center text-red-400">❌ Gagal memuat data</td></tr>`;
   }
 }
 
-function renderLeaderboard() {
-  const tbody = document.getElementById("publicLeaderboard");
-  if (!tbody) return;
-
-  let data = showAll ? allStakerData : allStakerData.slice(0, 10);
-
-  // Filter by search input
-  const searchInput = document.getElementById("searchWallet")?.value.trim().toLowerCase();
-  if (searchInput) {
-    data = allStakerData.filter(item => item.addr.toLowerCase().includes(searchInput));
-  }
-
-  tbody.innerHTML = "";
-
-  if (data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">⚠️ Wallet tidak ditemukan</td></tr>`;
-    return;
-  }
-
-  data.forEach((item, i) => {
-    let medal = "";
-    let rowClass = "";
-
-    if (i === 0) { medal = "🥇"; rowClass = "bg-yellow-900 text-yellow-300 font-bold"; }
-    else if (i === 1) { medal = "🥈"; rowClass = "bg-gray-800 text-gray-300 font-semibold"; }
-    else if (i === 2) { medal = "🥉"; rowClass = "bg-orange-900 text-orange-300 font-semibold"; }
-    else { rowClass = "bg-gray-900"; }
-
-    tbody.innerHTML += `
-      <tr class="${rowClass}">
-        <td class="p-2">${medal || i + 1}</td>
-        <td class="p-2">${item.addr.slice(0, 6)}...${item.addr.slice(-4)}</td>
-        <td class="p-2">${item.amount} KN</td>
-      </tr>`;
-  });
-
-  const btn = document.getElementById("toggleLeaderboard");
-  if (btn && !searchInput) {
-    btn.innerText = showAll ? "View Top 10" : "View All";
-    btn.disabled = false;
-  } else if (btn && searchInput) {
-    btn.innerText = "Search Mode";
-    btn.disabled = true;
-  }
-}
-
-function toggleLeaderboardView() {
-  showAll = !showAll;
-  renderLeaderboard();
-}
-
-// Auto refresh tiap 1 menit
+// Default load + auto refresh 1 menit
 document.addEventListener("DOMContentLoaded", () => {
+  switchNetwork("testnet"); // 🔥 default ke testnet
   loadPublicLeaderboard();
   setInterval(loadPublicLeaderboard, 60 * 1000);
 });
