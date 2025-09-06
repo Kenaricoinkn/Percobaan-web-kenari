@@ -596,13 +596,13 @@ async function loadPublicLeaderboard() {
 
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
 
-  // ✅ kalau kontrak staking kosong (contoh: mainnet)
+  // Kalau kontrak kosong (misal di mainnet)
   if (!STAKING_CONTRACT) {
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Leaderboard belum tersedia di jaringan ini</td></tr>`;
     return;
   }
 
-  // ✅ pakai provider dari switchNetwork, fallback testnet kalau undefined
+  // Pakai provider global dari switchNetwork atau fallback testnet
   const readProvider = (typeof provider !== "undefined" && provider)
     ? provider
     : new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
@@ -619,26 +619,29 @@ async function loadPublicLeaderboard() {
   try {
     const stakers = await contract.getAllStakers();
 
-    if (stakers.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet yang staking di jaringan ini</td></tr>`;
-      return;
-    }
-
     let stakerData = [];
     for (let addr of stakers) {
       const amount = await contract.getStaked(addr);
       const formatted = ethers.utils.formatUnits(amount, 18);
+      const raw = parseFloat(formatted);
 
-      // ✅ Format angka biar rapi
-      const displayAmount = parseFloat(formatted).toLocaleString("en-US", { 
-        minimumFractionDigits: 0, 
-        maximumFractionDigits: 6 
+      // 🚫 skip kalau stake 0
+      if (raw <= 0) continue;
+
+      const displayAmount = raw.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 6
       });
 
-      stakerData.push({ addr, amount: displayAmount, raw: parseFloat(formatted) });
+      stakerData.push({ addr, amount: displayAmount, raw });
     }
 
-    // Urutkan dari terbesar ke terkecil
+    if (stakerData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Belum ada wallet yang staking</td></tr>`;
+      return;
+    }
+
+    // Urutkan dari terbesar
     stakerData.sort((a, b) => b.raw - a.raw);
     const top10 = stakerData.slice(0, 10);
 
@@ -663,7 +666,7 @@ async function loadPublicLeaderboard() {
   }
 }
 
-// Default load + auto refresh tiap 1 menit
+// Auto load + refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
   loadPublicLeaderboard();
   setInterval(loadPublicLeaderboard, 60 * 1000);
