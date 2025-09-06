@@ -596,11 +596,13 @@ async function loadPublicLeaderboard() {
 
   tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⟳ Loading...</td></tr>`;
 
+  // Kalau kontrak kosong (misal di mainnet)
   if (!STAKING_CONTRACT) {
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center">⚠️ Leaderboard belum tersedia di jaringan ini</td></tr>`;
     return;
   }
 
+  // Pakai provider global dari switchNetwork atau fallback testnet
   const readProvider = (typeof provider !== "undefined" && provider)
     ? provider
     : new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
@@ -615,6 +617,10 @@ async function loadPublicLeaderboard() {
   );
 
   try {
+    // Ambil decimals dari token supaya gak hardcode 18
+    const token = new ethers.Contract(KN, ERC20_ABI, readProvider);
+    const decimals = await token.decimals();
+
     const stakers = await contract.getAllStakers();
 
     if (!stakers || stakers.length === 0) {
@@ -625,13 +631,12 @@ async function loadPublicLeaderboard() {
     let stakerData = [];
     for (let addr of stakers) {
       const amount = await contract.getStaked(addr);
-      const formatted = ethers.utils.formatUnits(amount, 18);
+      const formatted = ethers.utils.formatUnits(amount, decimals);
       const raw = parseFloat(formatted);
 
       if (raw <= 0) continue;
 
-      const displayAmount = raw.toFixed(6).replace(/\.?0+$/, "");
-
+      const displayAmount = raw.toFixed(2); // ✅ sesuai decimals=2 untuk KN
       stakerData.push({ addr, amount: displayAmount, raw });
     }
 
@@ -640,6 +645,7 @@ async function loadPublicLeaderboard() {
       return;
     }
 
+    // Urutkan dari terbesar
     stakerData.sort((a, b) => b.raw - a.raw);
     const top10 = stakerData.slice(0, 10);
 
@@ -664,6 +670,7 @@ async function loadPublicLeaderboard() {
   }
 }
 
+// Auto load + refresh tiap 1 menit
 document.addEventListener("DOMContentLoaded", () => {
   loadPublicLeaderboard();
   setInterval(loadPublicLeaderboard, 60 * 1000);
