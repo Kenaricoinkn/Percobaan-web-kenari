@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KenariCoin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
   <link rel="icon" href="img/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <link rel="manifest" href="manifest.json">
@@ -547,7 +548,49 @@ async function connectMetaMask() {
     setConnectedState(false);
   }
 }
+function selectWallet(which) {
+  if (which === "metamask") {
+    if (!isMobile() && window.ethereum) {
+      connectMetaMask(); // PC → extension
+    } else {
+      connectWalletConnect(); // Mobile → WalletConnect
+    }
+  } else if (which === "okx") {
+    connectOKX();
+  } else if (which === "walletconnect") {
+    connectWalletConnect();
+  }
+}// ========== Helper Deteksi Mobile ==========
+function isMobile() {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+  // ========== WalletConnect Connect ==========
+async function connectWalletConnect() {
+  try {
+    const wcProvider = await window.WalletConnectEthereumProvider.init({
+      projectId: "kenaricoin-demo", // ganti dengan Project ID WalletConnect v2
+      chains: [97], // 97 = BSC Testnet, 56 = Mainnet
+      showQrModal: true,
+    });
 
+    await wcProvider.enable();
+    provider = new ethers.providers.Web3Provider(wcProvider);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    setConnectedState(true);
+    await updateBalances();
+    if (BSC_CHAIN_ID === "0x61") {
+      await updateStaked();
+      await updateReward();
+    }
+    closeModal();
+  } catch (err) {
+    console.error("WalletConnect error", err);
+    alert("❌ Gagal connect: " + (err?.message || err));
+    setConnectedState(false);
+  }
+}
 
 // ========== UPDATE BALANCES ==========
 async function updateBalances(){
@@ -933,59 +976,6 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('❌ ServiceWorker failed:', err));
   });
 }
-
-<!-- Import WalletConnect library -->
-<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
-
-<script>
-// ========== Helper Deteksi Mobile ==========
-function isMobile() {
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
-
-// ========== Select Wallet Handler ==========
-function selectWallet(which) {
-  if (which === "metamask") {
-    if (!isMobile() && window.ethereum) {
-      connectMetaMask(); // PC → extension
-    } else {
-      connectWalletConnect(); // Mobile → WalletConnect
-    }
-  } else if (which === "okx") {
-    connectOKX();
-  } else if (which === "walletconnect") {
-    connectWalletConnect();
-  }
-}
-
-// ========== WalletConnect Connect ==========
-async function connectWalletConnect() {
-  try {
-    const wcProvider = await window.WalletConnectEthereumProvider.init({
-      projectId: "kenaricoin-demo", // ganti dengan Project ID WalletConnect v2
-      chains: [97], // 97 = BSC Testnet, 56 = Mainnet
-      showQrModal: true,
-    });
-
-    await wcProvider.enable();
-    provider = new ethers.providers.Web3Provider(wcProvider);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-
-    setConnectedState(true);
-    await updateBalances();
-    if (BSC_CHAIN_ID === "0x61") {
-      await updateStaked();
-      await updateReward();
-    }
-    closeModal();
-  } catch (err) {
-    console.error("WalletConnect error", err);
-    alert("❌ Gagal connect: " + (err?.message || err));
-    setConnectedState(false);
-  }
-}
 </script>
-
 </body>
 </html>
