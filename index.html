@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KenariCoin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="https://unpkg.com/@web3modal/html@2.7.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
   <link rel="icon" href="img/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <link rel="manifest" href="manifest.json">
@@ -295,11 +294,40 @@
     </div>
   </footer>
 
-<button id="connectBtn" onclick="connectWallet()">Connect</button>
-  <script>
-/*----------------------------
+<!-- Connect Modal -->
+<div id="walletModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+  <div class="bg-gray-900 p-6 rounded-2xl shadow-lg max-w-sm w-full text-center">
+    <h2 class="text-lg font-bold text-yellow-400 mb-4">Connect Wallet</h2>
+
+    <!-- MetaMask -->
+    <button onclick="selectWallet('metamask')" 
+      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
+      <img src="img/metamask.png" alt="MetaMask" class="w-5 h-5"> MetaMask
+    </button>
+
+    <!-- OKX -->
+    <button onclick="selectWallet('okx')" 
+      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
+      <img src="img/okx.png" alt="OKX" class="w-5 h-5"> OKX Wallet
+    </button>
+
+    <!-- WalletConnect -->
+    <button onclick="selectWallet('walletconnect')" 
+      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
+      <img src="img/walletconnect.png" alt="WalletConnect" class="w-5 h-5"> WalletConnect
+    </button>
+
+    <!-- Cancel -->
+    <button onclick="closeModal()" 
+      class="w-full px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg">
+      Cancel
+    </button>
+  </div>
+</div>
+<script>
+/* ----------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
-   ----------------------------*/
+   ---------------------------- */
 
 // ===== Utility UI =====
 function showPage(id){ document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); const el=document.getElementById(id); if(el) el.classList.add('active'); }
@@ -474,47 +502,96 @@ async function ensureWalletOnSelectedChain(){
   }
 }
 
-const modal = new window.Web3Modal.default({
-  projectId: "ISI_PROJECT_ID_KAMU", // ambil dari cloud.walletconnect.com
-  chains: [
-    {
-      chainId: 97,
-      name: "BSC Testnet",
-      currency: "BNB",
-      rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      explorerUrl: "https://testnet.bscscan.com"
-    },
-    {
-      chainId: 56,
-      name: "BNB Smart Chain",
-      currency: "BNB",
-      rpcUrl: "https://bsc-dataseed.binance.org/",
-      explorerUrl: "https://bscscan.com"
-    }
-  ],
-  metadata: {
-    name: "KenariCoin Dashboard",
-    description: "Stake and manage KenariCoin easily",
-    url: window.location.origin,
-    icons: ["img/logo.png"]
-  }
-});
 
-async function connectWallet(){
+// ========== UNIVERSAL WALLET CONNECT ==========
+async function connectMetaMask() {
   try {
-    const session = await modal.connect();
-    const provider = new ethers.providers.Web3Provider(session);
-    const signer = provider.getSigner();
-    const userAddress = await signer.getAddress();
+    if (!isMobile() && window.ethereum) {
+      // ✅ Desktop (Browser/PWA) pakai extension (MetaMask, OKX, Bitget)
+      await ensureWalletOnSelectedChain();
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
 
-    console.log("Connected:", userAddress);
-    document.getElementById("connectBtn").innerText =
-      userAddress.substring(0,6)+"..."+userAddress.slice(-4);
+      setConnectedState(true);
+      await updateBalances();
+      if (BSC_CHAIN_ID === "0x61") {
+        await updateStaked();
+        await updateReward();
+      }
+      closeModal();
+    } else {
+      // ✅ Mobile (PWA / Browser) pakai WalletConnect
+      const wcProvider = await window.WalletConnectEthereumProvider.init({
+        projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d", // TODO: ganti ke projectId WalletConnect v2 kamu
+        chains: [97], // 97 = BSC Testnet, 56 = BSC Mainnet
+        showQrModal: true,
+      });
+
+      await wcProvider.enable();
+      provider = new ethers.providers.Web3Provider(wcProvider);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+
+      setConnectedState(true);
+      await updateBalances();
+      if (BSC_CHAIN_ID === "0x61") {
+        await updateStaked();
+        await updateReward();
+      }
+      closeModal();
+    }
   } catch (err) {
-    console.error("Connect Wallet error:", err);
+    console.error("connectMetaMask error", err);
     alert("❌ Gagal connect: " + (err?.message || err));
+    setConnectedState(false);
   }
 }
+function selectWallet(which) {
+  if (which === "metamask") {
+    if (!isMobile() && window.ethereum) {
+      connectMetaMask(); // PC → extension
+    } else {
+      connectWalletConnect(); // Mobile → WalletConnect
+    }
+  } else if (which === "okx") {
+    connectOKX();
+  } else if (which === "walletconnect") {
+    connectWalletConnect();
+  }
+}// ========== Helper Deteksi Mobile ==========
+function isMobile() {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+  // ========== WalletConnect Connect ==========
+async function connectWalletConnect() {
+  try {
+    const wcProvider = await window.WalletConnectEthereumProvider.init({
+      projectId: "kenaricoin-demo", // ganti dengan Project ID WalletConnect v2
+      chains: [97], // 97 = BSC Testnet, 56 = Mainnet
+      showQrModal: true,
+    });
+
+    await wcProvider.enable();
+    provider = new ethers.providers.Web3Provider(wcProvider);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    setConnectedState(true);
+    await updateBalances();
+    if (BSC_CHAIN_ID === "0x61") {
+      await updateStaked();
+      await updateReward();
+    }
+    closeModal();
+  } catch (err) {
+    console.error("WalletConnect error", err);
+    alert("❌ Gagal connect: " + (err?.message || err));
+    setConnectedState(false);
+  }
+}
+
 // ========== UPDATE BALANCES ==========
 async function updateBalances(){
   if(!provider || !userAddress) return;
