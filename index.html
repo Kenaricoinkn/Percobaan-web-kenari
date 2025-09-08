@@ -295,9 +295,8 @@
     </div>
   </footer>
 
-<!-- Connect Modal -->
-<button onclick="connectWallet()">Connect Wallet</button>
-<script>
+<button id="connectBtn" onclick="connectWallet()">Connect</button>
+  <script>
 /*----------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
    ----------------------------*/
@@ -475,9 +474,8 @@ async function ensureWalletOnSelectedChain(){
   }
 }
 
-// Inisialisasi Web3Modal
 const modal = new window.Web3Modal.default({
-  projectId: "PROJECT_ID_KAMU", // ambil dari cloud.walletconnect.com
+  projectId: "ISI_PROJECT_ID_KAMU", // ambil dari cloud.walletconnect.com
   chains: [
     {
       chainId: 97,
@@ -502,7 +500,7 @@ const modal = new window.Web3Modal.default({
   }
 });
 
-async function connectWallet() {
+async function connectWallet(){
   try {
     const session = await modal.connect();
     const provider = new ethers.providers.Web3Provider(session);
@@ -510,13 +508,11 @@ async function connectWallet() {
     const userAddress = await signer.getAddress();
 
     console.log("Connected:", userAddress);
-    setConnectedState(true);
-    await updateBalances();
-    closeModal();
+    document.getElementById("connectBtn").innerText =
+      userAddress.substring(0,6)+"..."+userAddress.slice(-4);
   } catch (err) {
     console.error("Connect Wallet error:", err);
     alert("❌ Gagal connect: " + (err?.message || err));
-    setConnectedState(false);
   }
 }
 // ========== UPDATE BALANCES ==========
