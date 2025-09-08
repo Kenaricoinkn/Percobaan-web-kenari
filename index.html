@@ -476,37 +476,6 @@ async function ensureWalletOnSelectedChain(){
   }
 }
 
-
-// ========== UNIVERSAL WALLET CONNECT ==========
-async function connectMetaMask() {
-  try {
-    if (!isMobile() && window.ethereum) {
-      // ✅ Desktop (Browser dengan MetaMask/OKX/Bitget extension)
-      await ensureWalletOnSelectedChain();
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
-
-      setConnectedState(true);
-      await updateBalances();
-      if (BSC_CHAIN_ID === "0x61") {
-        await updateStaked();
-        await updateReward();
-      }
-      closeModal();
-    } else {
-      // ✅ Mobile → fallback ke WalletConnect
-      await connectWalletConnect();
-    }
-  } catch (err) {
-    console.error("connectMetaMask error", err);
-    alert("❌ Gagal connect: " + (err?.message || err));
-    setConnectedState(false);
-  }
-}
-
-// ========== WalletConnect Connect ==========
 // Inisialisasi Web3Modal
 const modal = new window.Web3Modal.default({
   projectId: "PROJECT_ID_KAMU", // ambil dari cloud.walletconnect.com
