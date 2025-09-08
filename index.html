@@ -39,6 +39,7 @@
   <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
   <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
   <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
+  <a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400" data-i18n="leaderboard">Leaderboard</a>
 </div>
 
   <!-- RIGHT: Network + Language + Connect -->
@@ -73,6 +74,7 @@
       <a href="#" onclick="navigate('about'); toggleMenu(false)" class="block hover:text-yellow-400">About</a>
       <a href="#" onclick="navigate('contact'); toggleMenu(false)" class="block hover:text-yellow-400">Contact</a>
       <a href="#" onclick="navigate('faq'); toggleMenu(false)" class="block hover:text-yellow-400">FAQ</a>
+      <a href="#" onclick="navigate('leaderboard'); toggleMenu(false)" class="block hover:text-yellow-400">Leaderboard</a>
     </div>
   </nav>
 
@@ -92,6 +94,56 @@
         <button onclick="copyContract()" class="px-3 py-1 bg-yellow-500 text-black rounded-lg text-sm hover:bg-yellow-400 glow-hover">Copy</button>
       </div>
     </div>
+    <!-- Highlight Box -->
+<div class="mt-8 max-w-xl mx-auto bg-yellow-500 text-black p-4 rounded-xl shadow text-center font-semibold glow-hover">
+  🚀 Staking Rewards & Airdrop Coming Soon!
+</div>
+
+<!-- Fitur Utama -->
+<div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+    <div class="text-3xl mb-2">⚡</div>
+    <h3 class="font-bold text-yellow-400">Cepat & Murah</h3>
+    <p class="text-gray-300 mt-2 text-sm">Transaksi kilat dengan biaya sangat rendah di jaringan BNB Smart Chain.</p>
+  </div>
+  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+    <div class="text-3xl mb-2">🔒</div>
+    <h3 class="font-bold text-yellow-400">Aman & Transparan</h3>
+    <p class="text-gray-300 mt-2 text-sm">Smart contract diaudit dan berjalan transparan di blockchain publik.</p>
+  </div>
+  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+    <div class="text-3xl mb-2">🌍</div>
+    <h3 class="font-bold text-yellow-400">Komunitas Global</h3>
+    <p class="text-gray-300 mt-2 text-sm">Didukung komunitas aktif yang siap mendorong adopsi KenariCoin.</p>
+  </div>
+  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+    <div class="text-3xl mb-2">💰</div>
+    <h3 class="font-bold text-yellow-400">Staking Reward</h3>
+    <p class="text-gray-300 mt-2 text-sm">Holder KN bisa mendapatkan imbal hasil melalui staking.</p>
+  </div>
+</div>
+
+<!-- Tokenomics -->
+<div class="mt-12 max-w-3xl mx-auto bg-gray-800 p-6 rounded-xl shadow glow-hover">
+  <h3 class="text-xl font-bold mb-4 text-yellow-400">📊 Tokenomics</h3>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-gray-300">
+    <div><span class="font-bold text-yellow-400">Symbol</span><br>KN</div>
+    <div><span class="font-bold text-yellow-400">Decimals</span><br>6</div>
+    <div><span class="font-bold text-yellow-400">Total Supply</span><br>500 Triliun</div>
+    <div><span class="font-bold text-yellow-400">Network</span><br>BSC (BEP-20)</div>
+  </div>
+</div>
+
+<!-- Roadmap -->
+<div class="mt-12 max-w-2xl mx-auto text-left">
+  <h3 class="text-xl font-bold mb-4 text-yellow-400">🛣️ Roadmap</h3>
+  <ul class="space-y-2 text-gray-300">
+    <li>✅ Testnet Launch</li>
+    <li>🚀 Mainnet Deployment</li>
+    <li>📈 Listing di DEX</li>
+    <li>🌐 Ekspansi Ekosistem</li>
+  </ul>
+</div>
   </section>
 
     <!-- Wallet -->
@@ -180,6 +232,34 @@
         mengunci token mereka di smart contract staking.
       </p>
     </div>
+  </div>
+</section>
+  <!-- Leaderboard -->
+<section id="leaderboard" class="page-section max-w-4xl mx-auto text-center">
+  <h2 class="text-2xl font-bold mb-6 text-yellow-400">🏆 Staking Leaderboard</h2>
+
+  <!-- Top 10 -->
+  <div class="overflow-x-auto">
+    <table class="w-full border border-gray-700 rounded-xl overflow-hidden">
+      <thead class="bg-gray-800 text-yellow-400">
+        <tr>
+          <th class="px-4 py-2 text-left">Rank</th>
+          <th class="px-4 py-2 text-left">Address</th>
+          <th class="px-4 py-2 text-right">Staked KN</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardBody" class="bg-gray-900 divide-y divide-gray-700">
+        <!-- Top 10 will load here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- View All -->
+  <div class="mt-6">
+    <button onclick="viewAllLeaderboard()" 
+      class="px-6 py-3 bg-yellow-500 text-black rounded-xl font-bold shadow hover:bg-yellow-400 transform hover:scale-105 transition">
+      🔍 View All Stakers
+    </button>
   </div>
 </section>
   </main>
@@ -749,6 +829,51 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(e){
     console.error('init error', e);
   }
+});
+  // ===== LEADERBOARD MOCK / SAMPLE DATA =====
+let leaderboardData = [
+  {address:"0xA123...111", staked:120000},
+  {address:"0xB456...222", staked:95000},
+  {address:"0xC789...333", staked:85000},
+  {address:"0xD111...444", staked:74000},
+  {address:"0xE222...555", staked:68000},
+  {address:"0xF333...666", staked:53000},
+  {address:"0xG444...777", staked:49000},
+  {address:"0xH555...888", staked:42000},
+  {address:"0xI666...999", staked:39000},
+  {address:"0xJ777...AAA", staked:35000},
+  {address:"0xK888...BBB", staked:30000},
+];
+
+// Load Top 10
+function loadLeaderboard(topOnly = true){
+  const tbody = document.getElementById("leaderboardBody");
+  if(!tbody) return;
+  tbody.innerHTML = "";
+
+  let data = [...leaderboardData];
+  data.sort((a,b)=>b.staked - a.staked);
+  if(topOnly) data = data.slice(0,10);
+
+  data.forEach((row,i)=>{
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-gray-800 transition";
+    tr.innerHTML = `
+      <td class="px-4 py-2 font-bold ${i<3?'text-yellow-400':''}">#${i+1}</td>
+      <td class="px-4 py-2">${row.address}</td>
+      <td class="px-4 py-2 text-right">${row.staked.toLocaleString()} KN</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function viewAllLeaderboard(){
+  loadLeaderboard(false);
+}
+
+// auto-load leaderboard saat navigate
+document.addEventListener("DOMContentLoaded", ()=> {
+  loadLeaderboard(true);
 });
 </script>
 </body>
