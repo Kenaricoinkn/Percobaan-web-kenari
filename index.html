@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KenariCoin Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="img/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
@@ -294,18 +293,36 @@
     </div>
   </footer>
 
-  <!-- WALLET MODAL -->
-  <div id="walletModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
-    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-lg text-gray-100 glow-hover">
-      <h2 class="text-lg font-bold mb-4 text-center">Connect Wallet</h2>
-      <div class="space-y-3">
-        <button onclick="selectWallet('metamask')" class="w-full border border-gray-600 rounded-lg py-2 hover:bg-gray-700 glow-hover">🦊 MetaMask</button>
-        <button onclick="selectWallet('okx')" class="w-full border border-gray-600 rounded-lg py-2 hover:bg-gray-700 glow-hover">⚫ OKX Wallet</button>
-      </div>
-      <button onclick="closeModal()" class="w-full mt-3 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 glow-hover">Cancel</button>
-    </div>
-  </div>
+<!-- Connect Modal -->
+<div id="walletModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+  <div class="bg-gray-900 p-6 rounded-2xl shadow-lg max-w-sm w-full text-center">
+    <h2 class="text-lg font-bold text-yellow-400 mb-4">Connect Wallet</h2>
 
+    <!-- MetaMask -->
+    <button onclick="selectWallet('metamask')" 
+      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
+      <img src="img/metamask.png" alt="MetaMask" class="w-5 h-5"> MetaMask
+    </button>
+
+    <!-- OKX -->
+    <button onclick="selectWallet('okx')" 
+      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
+      <img src="img/okx.png" alt="OKX" class="w-5 h-5"> OKX Wallet
+    </button>
+
+    <!-- WalletConnect -->
+    <button onclick="selectWallet('walletconnect')" 
+      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
+      <img src="img/walletconnect.png" alt="WalletConnect" class="w-5 h-5"> WalletConnect
+    </button>
+
+    <!-- Cancel -->
+    <button onclick="closeModal()" 
+      class="w-full px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg">
+      Cancel
+    </button>
+  </div>
+</div>
 <script>
 /* ----------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
@@ -530,18 +547,7 @@ async function connectMetaMask() {
     setConnectedState(false);
   }
 }
-function selectWallet(which) {
-  if (which === 'metamask') {
-    // cek device
-    if (!isMobile() && window.ethereum) {
-      connectMetaMask(); // Desktop → extension
-    } else {
-      connectWalletConnect(); // Mobile → WalletConnect
-    }
-  } else if (which === 'okx') {
-    connectOKX();
-  }
-}
+
 
 // ========== UPDATE BALANCES ==========
 async function updateBalances(){
@@ -913,10 +919,13 @@ function viewAllLeaderboard(){
   loadLeaderboard(false);
 }
 
+<script>
 // auto-load leaderboard saat navigate
 document.addEventListener("DOMContentLoaded", ()=> {
   loadLeaderboard(true);
 });
+
+// register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
@@ -925,5 +934,59 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+
+<!-- Import WalletConnect library -->
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
+
+<script>
+// ========== Helper Deteksi Mobile ==========
+function isMobile() {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+// ========== Select Wallet Handler ==========
+function selectWallet(which) {
+  if (which === "metamask") {
+    if (!isMobile() && window.ethereum) {
+      connectMetaMask(); // PC → extension
+    } else {
+      connectWalletConnect(); // Mobile → WalletConnect
+    }
+  } else if (which === "okx") {
+    connectOKX();
+  } else if (which === "walletconnect") {
+    connectWalletConnect();
+  }
+}
+
+// ========== WalletConnect Connect ==========
+async function connectWalletConnect() {
+  try {
+    const wcProvider = await window.WalletConnectEthereumProvider.init({
+      projectId: "kenaricoin-demo", // ganti dengan Project ID WalletConnect v2
+      chains: [97], // 97 = BSC Testnet, 56 = Mainnet
+      showQrModal: true,
+    });
+
+    await wcProvider.enable();
+    provider = new ethers.providers.Web3Provider(wcProvider);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    setConnectedState(true);
+    await updateBalances();
+    if (BSC_CHAIN_ID === "0x61") {
+      await updateStaked();
+      await updateReward();
+    }
+    closeModal();
+  } catch (err) {
+    console.error("WalletConnect error", err);
+    alert("❌ Gagal connect: " + (err?.message || err));
+    setConnectedState(false);
+  }
+}
+</script>
+
 </body>
 </html>
