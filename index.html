@@ -890,7 +890,8 @@ if ('serviceWorker' in navigator) {
   let provider = null, signer = null, userAddress = null;
 
 const modal = new window.Web3Modal.default({
-  projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d", // ✅ projectId asli kamu
+const modal = new window.Web3Modal.default({
+  projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d",
   chains: [
     {
       chainId: 97,
@@ -913,8 +914,7 @@ const modal = new window.Web3Modal.default({
     url: window.location.origin,
     icons: ["img/logo.png"]
   }
-});
-
+}); // ⬅️ kurung ini cukup sekali aja
   async function connectWallet(){
     try {
       const session = await modal.connect();
