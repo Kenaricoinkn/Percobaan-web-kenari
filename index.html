@@ -919,7 +919,7 @@ function viewAllLeaderboard(){
   loadLeaderboard(false);
 }
 
-<script>
+
 // auto-load leaderboard saat navigate
 document.addEventListener("DOMContentLoaded", ()=> {
   loadLeaderboard(true);
@@ -933,7 +933,6 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('❌ ServiceWorker failed:', err));
   });
 }
-</script>
 
 <!-- Import WalletConnect library -->
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
