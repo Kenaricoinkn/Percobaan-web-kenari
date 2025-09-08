@@ -296,11 +296,12 @@
     </div>
   </footer>
 
-<script>
+
 /* ----------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
    ---------------------------- */
 
+<script>
 // ===== Utility UI =====
 function showPage(id) {
   document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
@@ -374,6 +375,61 @@ function setConnectedState(connected) {
     btn.classList.add('bg-yellow-500','hover:bg-yellow-400','text-black');
   }
 }
+
+// ===== Wallet Connect (Web3Modal) =====
+let web3Modal, web3Provider, signer, userAddress;
+
+const providerOptions = {
+  walletconnect: {
+    package: window.WalletConnectProvider.default,
+    options: {
+      rpc: {
+        97: "https://data-seed-prebsc-1-s1.binance.org:8545", // BSC testnet
+        56: "https://bsc-dataseed.binance.org/"              // BSC mainnet
+      }
+    }
+  }
+};
+
+window.addEventListener("load", () => {
+  web3Modal = new window.Web3Modal.default({
+    cacheProvider: true,
+    providerOptions,
+    theme: "dark"
+  });
+});
+
+async function onConnect() {
+  try {
+    const instance = await web3Modal.connect();
+    web3Provider = new ethers.providers.Web3Provider(instance);
+    signer = web3Provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    setConnectedState(true);
+
+    // update saldo awal
+    updateBalances?.();
+    if (typeof BSC_CHAIN_ID !== "undefined" && BSC_CHAIN_ID === '0x61') {
+      updateStaked?.();
+      updateReward?.();
+    }
+  } catch (err) {
+    console.error("❌ Connect wallet failed", err);
+    showToast("❌ Gagal connect wallet", "error");
+  }
+}
+
+async function onDisconnect() {
+  if (web3Modal) await web3Modal.clearCachedProvider();
+  web3Provider = null; signer = null; userAddress = null;
+  setConnectedState(false);
+  const bnbBox = document.getElementById('bnbBalance');
+  const tokenBox = document.getElementById('tokenBalance');
+  if (bnbBox) bnbBox.innerText = '0 BNB';
+  if (tokenBox) tokenBox.innerText = '0 KN';
+}
+</script>
 
 // ===== Blockchain / contract variables =====
 let KN = '', STAKING_CONTRACT = '', FAUCET_CONTRACT = '', BSC_CHAIN_ID = '';
