@@ -484,50 +484,63 @@ async function ensureWalletOnSelectedChain(){
   }
 }
 
-// ========== WALLET CONNECT ==========
-async function connectMetaMask(){
-  if(!window.ethereum) return alert('MetaMask tidak ditemukan. Install MetaMask terlebih dahulu.');
-  try {
-    await ensureWalletOnSelectedChain();
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send('eth_requestAccounts', []);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
 
-    setConnectedState(true);
-    await updateBalances();
-    if(BSC_CHAIN_ID === '0x61'){ await updateStaked(); await updateReward(); }
-    closeModal();
-  } catch(err){
-    console.error('connectMetaMask error', err);
-    alert('Gagal connect: ' + (err?.message || err));
+// ========== UNIVERSAL WALLET CONNECT ==========
+async function connectMetaMask() {
+  try {
+    if (!isMobile() && window.ethereum) {
+      // ✅ Desktop (Browser/PWA) pakai extension (MetaMask, OKX, Bitget)
+      await ensureWalletOnSelectedChain();
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+
+      setConnectedState(true);
+      await updateBalances();
+      if (BSC_CHAIN_ID === "0x61") {
+        await updateStaked();
+        await updateReward();
+      }
+      closeModal();
+    } else {
+      // ✅ Mobile (PWA / Browser) pakai WalletConnect
+      const wcProvider = await window.WalletConnectEthereumProvider.init({
+        projectId: "kenaricoin-demo", // TODO: ganti ke projectId WalletConnect v2 kamu
+        chains: [97], // 97 = BSC Testnet, 56 = BSC Mainnet
+        showQrModal: true,
+      });
+
+      await wcProvider.enable();
+      provider = new ethers.providers.Web3Provider(wcProvider);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+
+      setConnectedState(true);
+      await updateBalances();
+      if (BSC_CHAIN_ID === "0x61") {
+        await updateStaked();
+        await updateReward();
+      }
+      closeModal();
+    }
+  } catch (err) {
+    console.error("connectMetaMask error", err);
+    alert("❌ Gagal connect: " + (err?.message || err));
     setConnectedState(false);
   }
 }
-
-async function connectOKX(){
-  if(!(window.okxwallet && window.okxwallet.request)) return alert('OKX Wallet tidak ditemukan.');
-  try {
-    await ensureWalletOnSelectedChain();
-    provider = new ethers.providers.Web3Provider(window.okxwallet);
-    await provider.send('eth_requestAccounts', []);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-
-    setConnectedState(true);
-    await updateBalances();
-    if(BSC_CHAIN_ID === '0x61'){ await updateStaked(); await updateReward(); }
-    closeModal();
-  } catch(err){
-    console.error('connectOKX error', err);
-    alert('Gagal connect: ' + (err?.message || err));
-    setConnectedState(false);
+function selectWallet(which) {
+  if (which === 'metamask') {
+    // cek device
+    if (!isMobile() && window.ethereum) {
+      connectMetaMask(); // Desktop → extension
+    } else {
+      connectWalletConnect(); // Mobile → WalletConnect
+    }
+  } else if (which === 'okx') {
+    connectOKX();
   }
-}
-
-function selectWallet(which){
-  if(which === 'metamask') connectMetaMask();
-  else if(which === 'okx') connectOKX();
 }
 
 // ========== UPDATE BALANCES ==========
