@@ -76,7 +76,7 @@
       <option value="en">EN</option>
     </select>
 
-    <button id="walletBtn" onclick="onConnect()" 
+    <button id="connectBtn" onclick="onConnect()" 
   class="px-4 py-2 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400">
   🔌 Connect
 </button>
@@ -302,12 +302,46 @@
    ---------------------------- */
 
 // ===== Utility UI =====
-function showPage(id){ document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); const el=document.getElementById(id); if(el) el.classList.add('active'); }
-function navigate(id){ showPage(id); closeModal(); toggleMenu(false); if(id) history.replaceState(null,'','#'+id); }
-function toggleMenu(force){ const m=document.getElementById('mobileMenu'); if(!m) return; if(typeof force==='boolean'){ m.classList.toggle('hidden', !force); } else m.classList.toggle('hidden'); }
-function openModal(){ document.getElementById('walletModal').classList.remove('hidden'); }
-function closeModal(){ document.getElementById('walletModal').classList.add('hidden'); }
-function copyContract(){ const a=document.getElementById('contractAddr')?.innerText; if(a){ navigator.clipboard.writeText(a); alert('✅ Disalin: '+a); } }
+function showPage(id) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function navigate(id) {
+  showPage(id);
+  closeModal();
+  toggleMenu(false); // ✅ auto close menu setelah klik link
+  if (id) history.replaceState(null, '', '#' + id);
+}
+
+// ✅ versi fix: toggleMenu sekarang jelas open/close
+function toggleMenu(force) {
+  const m = document.getElementById('mobileMenu');
+  if (!m) return;
+  if (typeof force === 'boolean') {
+    if (force) m.classList.remove('hidden');  // open
+    else m.classList.add('hidden');           // close
+  } else {
+    m.classList.toggle('hidden');             // toggle biasa
+  }
+}
+
+function openModal() {
+  document.getElementById('walletModal')?.classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('walletModal')?.classList.add('hidden');
+}
+
+function copyContract() {
+  const a = document.getElementById('contractAddr')?.innerText;
+  if (a) {
+    navigator.clipboard.writeText(a);
+    alert('✅ Disalin: ' + a);
+  }
+}
 
 // simple toast
 function showToast(msg, type='info') {
