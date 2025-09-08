@@ -507,7 +507,7 @@ async function ensureWalletOnSelectedChain(){
 async function connectMetaMask() {
   try {
     if (!isMobile() && window.ethereum) {
-      // ✅ Desktop (Browser/PWA) pakai extension (MetaMask, OKX, Bitget)
+      // ✅ Desktop (Browser dengan MetaMask/OKX/Bitget extension)
       await ensureWalletOnSelectedChain();
       provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
@@ -522,25 +522,8 @@ async function connectMetaMask() {
       }
       closeModal();
     } else {
-      // ✅ Mobile (PWA / Browser) pakai WalletConnect
-      const wcProvider = await window.WalletConnectEthereumProvider.init({
-        projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d", // TODO: ganti ke projectId WalletConnect v2 kamu
-        chains: [97], // 97 = BSC Testnet, 56 = BSC Mainnet
-        showQrModal: true,
-      });
-
-      await wcProvider.enable();
-      provider = new ethers.providers.Web3Provider(wcProvider);
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
-
-      setConnectedState(true);
-      await updateBalances();
-      if (BSC_CHAIN_ID === "0x61") {
-        await updateStaked();
-        await updateReward();
-      }
-      closeModal();
+      // ✅ Mobile → fallback ke WalletConnect
+      await connectWalletConnect();
     }
   } catch (err) {
     console.error("connectMetaMask error", err);
@@ -548,32 +531,18 @@ async function connectMetaMask() {
     setConnectedState(false);
   }
 }
-function selectWallet(which) {
-  if (which === "metamask") {
-    if (!isMobile() && window.ethereum) {
-      connectMetaMask(); // PC → extension
-    } else {
-      connectWalletConnect(); // Mobile → WalletConnect
-    }
-  } else if (which === "okx") {
-    connectOKX();
-  } else if (which === "walletconnect") {
-    connectWalletConnect();
-  }
-}// ========== Helper Deteksi Mobile ==========
-function isMobile() {
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
-  // ========== WalletConnect Connect ==========
+
+// ========== WalletConnect Connect ==========
 async function connectWalletConnect() {
   try {
-    const wcProvider = await window.WalletConnectEthereumProvider.init({
-      projectId: "kenaricoin-demo", // ganti dengan Project ID WalletConnect v2
+    const wcProvider = new window.WalletConnectEthereumProvider({
+      projectId: "ISI_PROJECT_ID_KAMU", // ganti dengan Project ID dari https://cloud.walletconnect.com
       chains: [97], // 97 = BSC Testnet, 56 = Mainnet
       showQrModal: true,
     });
 
     await wcProvider.enable();
+
     provider = new ethers.providers.Web3Provider(wcProvider);
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
