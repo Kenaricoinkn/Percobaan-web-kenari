@@ -560,6 +560,20 @@ async function connectWalletConnect() {
     setConnectedState(false);
   }
 }
+  // ========== PILIH WALLET ==========
+function selectWallet(which) {
+  console.log("Wallet selected:", which);
+
+  if (which === "metamask") {
+    connectMetaMask();
+  } else if (which === "walletconnect") {
+    connectWalletConnect();
+  } else if (which === "okx") {
+    alert("OKX Wallet belum diimplementasikan");
+  } else {
+    alert("Wallet tidak dikenali: " + which);
+  }
+}
 
 // ========== UPDATE BALANCES ==========
 async function updateBalances(){
