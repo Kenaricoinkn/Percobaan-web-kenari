@@ -297,9 +297,9 @@
   </footer>
 
 
-/* ----------------------------
+---------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
-   ---------------------------- */
+   ----------------------------
 
 <script>
 // ===== Utility UI =====
@@ -316,7 +316,7 @@ function navigate(id) {
   if (id) history.replaceState(null, '', '#' + id);
 }
 
-// ✅ versi fix: toggleMenu sekarang jelas open/close
+// ✅ versi fix toggleMenu
 function toggleMenu(force) {
   const m = document.getElementById('mobileMenu');
   if (!m) return;
@@ -369,24 +369,40 @@ function setConnectedState(connected) {
     btn.innerText = 'Connected';
     btn.classList.remove('bg-yellow-500','hover:bg-yellow-400','text-black');
     btn.classList.add('bg-red-600','hover:bg-red-500','text-white');
+    btn.onclick = onDisconnect;
   } else {
     btn.innerText = 'Connect';
     btn.classList.remove('bg-red-600','hover:bg-red-500','text-white');
     btn.classList.add('bg-yellow-500','hover:bg-yellow-400','text-black');
+    btn.onclick = onConnect;
   }
 }
 
-// ===== Wallet Connect (Web3Modal) =====
+// ===== Wallet Connect (Web3Modal Hybrid + OKX) =====
 let web3Modal, web3Provider, signer, userAddress;
 
 const providerOptions = {
+  injected: {
+    display: {
+      name: "Browser Wallet",
+      description: "MetaMask / OKX / TrustWallet extension"
+    },
+    package: null
+  },
   walletconnect: {
     package: window.WalletConnectProvider.default,
     options: {
       rpc: {
-        97: "https://data-seed-prebsc-1-s1.binance.org:8545", // BSC testnet
-        56: "https://bsc-dataseed.binance.org/"              // BSC mainnet
+        97: "https://data-seed-prebsc-1-s1.binance.org:8545", // BSC Testnet
+        56: "https://bsc-dataseed.binance.org/"               // BSC Mainnet
       }
+    }
+  },
+  okxwallet: {
+    package: () => { return window.okxwallet; },
+    display: {
+      name: "OKX Wallet",
+      description: "OKX App / Extension"
     }
   }
 };
@@ -395,7 +411,8 @@ window.addEventListener("load", () => {
   web3Modal = new window.Web3Modal.default({
     cacheProvider: true,
     providerOptions,
-    theme: "dark"
+    theme: "dark",
+    disableInjectedProvider: true // ✅ paksa popup selalu muncul
   });
 });
 
@@ -408,12 +425,14 @@ async function onConnect() {
 
     setConnectedState(true);
 
-    // update saldo awal
-    updateBalances?.();
+    // update saldo awal (jika fungsi tersedia)
+    if (typeof updateBalances === "function") updateBalances();
     if (typeof BSC_CHAIN_ID !== "undefined" && BSC_CHAIN_ID === '0x61') {
-      updateStaked?.();
-      updateReward?.();
+      if (typeof updateStaked === "function") updateStaked();
+      if (typeof updateReward === "function") updateReward();
     }
+
+    showToast("✅ Wallet terhubung", "success");
   } catch (err) {
     console.error("❌ Connect wallet failed", err);
     showToast("❌ Gagal connect wallet", "error");
@@ -428,6 +447,7 @@ async function onDisconnect() {
   const tokenBox = document.getElementById('tokenBalance');
   if (bnbBox) bnbBox.innerText = '0 BNB';
   if (tokenBox) tokenBox.innerText = '0 KN';
+  showToast("🔌 Wallet disconnected", "warning");
 }
 </script>
 
