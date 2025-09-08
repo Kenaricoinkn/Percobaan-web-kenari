@@ -297,39 +297,11 @@
   </footer>
 
 <!-- Connect Modal -->
-<div id="walletModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-  <div class="bg-gray-900 p-6 rounded-2xl shadow-lg max-w-sm w-full text-center">
-    <h2 class="text-lg font-bold text-yellow-400 mb-4">Connect Wallet</h2>
-
-    <!-- MetaMask -->
-    <button onclick="selectWallet('metamask')" 
-      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
-      <img src="img/metamask.png" alt="MetaMask" class="w-5 h-5"> MetaMask
-    </button>
-
-    <!-- OKX -->
-    <button onclick="selectWallet('okx')" 
-      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
-      <img src="img/okx.png" alt="OKX" class="w-5 h-5"> OKX Wallet
-    </button>
-
-    <!-- WalletConnect -->
-    <button onclick="selectWallet('walletconnect')" 
-      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
-      <img src="img/walletconnect.png" alt="WalletConnect" class="w-5 h-5"> WalletConnect
-    </button>
-
-    <!-- Cancel -->
-    <button onclick="closeModal()" 
-      class="w-full px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg">
-      Cancel
-    </button>
-  </div>
-</div>
+<button onclick="connectWallet()">Connect Wallet</button>
 <script>
-/* ----------------------------
+/*----------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
-   ---------------------------- */
+   ----------------------------*/
 
 // ===== Utility UI =====
 function showPage(id){ document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); const el=document.getElementById(id); if(el) el.classList.add('active'); }
@@ -535,51 +507,50 @@ async function connectMetaMask() {
 }
 
 // ========== WalletConnect Connect ==========
-async function connectWalletConnect() {
-  try {
-    if (!window.WalletConnectEthereumProvider) {
-      alert("❌ WalletConnect library belum dimuat!");
-      return;
+// Inisialisasi Web3Modal
+const modal = new window.Web3Modal.default({
+  projectId: "PROJECT_ID_KAMU", // ambil dari cloud.walletconnect.com
+  chains: [
+    {
+      chainId: 97,
+      name: "BSC Testnet",
+      currency: "BNB",
+      rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      explorerUrl: "https://testnet.bscscan.com"
+    },
+    {
+      chainId: 56,
+      name: "BNB Smart Chain",
+      currency: "BNB",
+      rpcUrl: "https://bsc-dataseed.binance.org/",
+      explorerUrl: "https://bscscan.com"
     }
+  ],
+  metadata: {
+    name: "KenariCoin Dashboard",
+    description: "Stake and manage KenariCoin easily",
+    url: window.location.origin,
+    icons: ["img/logo.png"]
+  }
+});
 
-    const wcProvider = await window.WalletConnectEthereumProvider.init({
-      projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d", // project ID kamu
-      chains: [97], // 97 testnet, 56 mainnet
-      showQrModal: true,
-    });
+async function connectWallet() {
+  try {
+    const session = await modal.connect();
+    const provider = new ethers.providers.Web3Provider(session);
+    const signer = provider.getSigner();
+    const userAddress = await signer.getAddress();
 
-    provider = new ethers.providers.Web3Provider(wcProvider);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-
+    console.log("Connected:", userAddress);
     setConnectedState(true);
     await updateBalances();
-    if (BSC_CHAIN_ID === "0x61") {
-      await updateStaked();
-      await updateReward();
-    }
     closeModal();
   } catch (err) {
-    console.error("WalletConnect error", err);
+    console.error("Connect Wallet error:", err);
     alert("❌ Gagal connect: " + (err?.message || err));
     setConnectedState(false);
   }
 }
-  // ========== PILIH WALLET ==========
-function selectWallet(which) {
-  console.log("Wallet selected:", which);
-
-  if (which === "metamask") {
-    connectMetaMask();
-  } else if (which === "walletconnect") {
-    connectWalletConnect();
-  } else if (which === "okx") {
-    alert("OKX Wallet belum diimplementasikan");
-  } else {
-    alert("Wallet tidak dikenali: " + which);
-  }
-}
-
 // ========== UPDATE BALANCES ==========
 async function updateBalances(){
   if(!provider || !userAddress) return;
