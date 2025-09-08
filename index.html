@@ -534,9 +534,10 @@ async function connectMetaMask() {
 
 // ========== WalletConnect Connect ==========
 async function connectWalletConnect() {
+async function connectWalletConnect() {
   try {
-    const wcProvider = new window.WalletConnectEthereumProvider({
-      projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d", // ganti dengan Project ID dari https://cloud.walletconnect.com
+    const wcProvider = await window.WalletConnectProvider.init({
+      projectId: "b83eac64f87cfacdeb60ef81ba5c6a1d", // project ID dari cloud.walletconnect.com
       chains: [97], // 97 = BSC Testnet, 56 = Mainnet
       showQrModal: true,
     });
