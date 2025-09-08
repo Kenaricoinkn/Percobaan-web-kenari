@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="img/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FACC15" />
 
   <style>
     .page-section { opacity:0; transform:translateY(10px); transition:opacity .35s ease,transform .35s ease; display:none; }
@@ -890,6 +892,13 @@ function viewAllLeaderboard(){
 document.addEventListener("DOMContentLoaded", ()=> {
   loadLeaderboard(true);
 });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('✅ ServiceWorker registered:', reg))
+      .catch(err => console.log('❌ ServiceWorker failed:', err));
+  });
+}
 </script>
 </body>
 </html>
