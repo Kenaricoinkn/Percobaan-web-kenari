@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KenariCoin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
   <script src="https://unpkg.com/@web3modal/html@2.7.1"></script>
   <link rel="icon" href="img/logo.png" />
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#FACC15" />
 
@@ -298,7 +296,6 @@
    SCRIPT BLOCKCHAIN & UI (FULL)
    ---------------------------- */
 
-// ===== Utility UI (fixed, tanpa modal lama) =====
 function showPage(id) {
   document.querySelectorAll('.page-section')
     .forEach(s => s.classList.remove('active'));
@@ -308,7 +305,7 @@ function showPage(id) {
 
 function navigate(id) {
   showPage(id);
-  // closeModal(); // ❌ tidak perlu lagi, modal lama sudah dihapus
+  // closeModal(); // ❌ tidak perlu lagi
   toggleMenu(false);
   if (id) history.replaceState(null, '', '#' + id);
 }
@@ -323,10 +320,14 @@ function toggleMenu(force) {
   }
 }
 
-// Modal lama dihapus → biar aman, fungsi kosong
-function openModal() { /* modal lama sudah dihapus */ }
-function closeModal() { /* modal lama sudah dihapus */ }
-
+function openModal(){
+  const m = document.getElementById('walletModal');
+  if (m) m.classList.remove('hidden');
+}
+function closeModal(){
+  const m = document.getElementById('walletModal');
+  if (m) m.classList.add('hidden');
+}
 function copyContract() {
   const a = document.getElementById('contractAddr')?.innerText;
   if (a) {
@@ -916,28 +917,38 @@ const modal = new window.Web3Modal.default({
   }
 }); // ⬅️ kurung ini cukup sekali aja
   async function connectWallet(){
-    try {
-      const session = await modal.connect();
-      provider = new ethers.providers.Web3Provider(session);
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
+  try {
+    const session = await modal.connect();
 
-      console.log("Connected:", userAddress);
-      document.getElementById("connectBtn").innerText =
-        userAddress.substring(0,6)+"..."+userAddress.slice(-4);
+    // pakai variabel global (JANGAN pakai const di sini)
+    provider = new ethers.providers.Web3Provider(session);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
 
-      // panggil fitur lain setelah connect
-      setConnectedState(true);
-      await updateBalances();
+    // update tombol
+    const btn = document.getElementById("connectBtn");
+    if (btn) btn.innerText = `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+
+    setConnectedState(true);
+
+    // pastikan chain sesuai dropdown yang aktif
+    await ensureWalletOnSelectedChain();
+
+    // muat data
+    await updateBalances();
+    if (BSC_CHAIN_ID === "0x61") {
       await updateStaked();
       await updateReward();
-      loadLeaderboard(true);
-    } catch (err) {
-      console.error("Connect Wallet error:", err);
-      alert("❌ Gagal connect: " + (err?.message || err));
-      setConnectedState(false);
     }
+
+    // aman, sekarang null-safe
+    closeModal();
+  } catch (err) {
+    console.error("Connect Wallet error:", err);
+    alert("❌ Gagal connect: " + (err?.message || err));
+    setConnectedState(false);
   }
+}
 </script>
 </body>
 </html>
