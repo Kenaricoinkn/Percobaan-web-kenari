@@ -1,9 +1,10 @@
 {
-  "name": "KenariCoin",
-  "short_name": "Kenari",
-  "start_url": "/index.html",
+  "name": "KenariCoin Dashboard",
+  "short_name": "KenariCoin",
+  "description": "Dashboard & Admin Panel untuk KenariCoin (KN)",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#111827",
   "theme_color": "#facc15",
   "orientation": "portrait",
   "icons": [
