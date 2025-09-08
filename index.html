@@ -6,6 +6,20 @@
   <title>KenariCoin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="img/Logo.png" />
+  <!-- Favicon + PWA -->
+<link rel="icon" type="image/png" sizes="32x32" href="img/logo-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="img/logo-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="img/logo-512.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#facc15">
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(() => console.log("✅ Service Worker registered"))
+      .catch(err => console.log("❌ Service Worker failed", err));
+  }
+</script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
   <style>
