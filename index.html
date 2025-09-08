@@ -32,6 +32,11 @@
   </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+ <!-- isi web + tombol -->
+  <button id="walletBtn" onclick="onConnect()" 
+    class="px-4 py-2 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400">
+    🔌 Connect Wallet
+  </button>
 
   <!-- NAVBAR -->
 <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
@@ -311,6 +316,68 @@
       <button onclick="closeModal()" class="w-full mt-3 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 glow-hover">Cancel</button>
     </div>
   </div>
+    <!-- Fungsi connect/disconnect diletakkan di akhir -->
+  <script>
+    let web3Modal, web3Provider, signer, userAddress;
+
+    const providerOptions = {
+      walletconnect: {
+        package: window.WalletConnectProvider.default,
+        options: {
+          rpc: {
+            97: "https://data-seed-prebsc-1-s1.binance.org:8545",
+            56: "https://bsc-dataseed.binance.org/"
+          }
+        }
+      }
+    };
+
+    window.addEventListener("load", () => {
+      web3Modal = new window.Web3Modal.default({
+        cacheProvider: true,
+        providerOptions,
+        theme: "dark"
+      });
+    });
+
+    async function onConnect() {
+      try {
+        const instance = await web3Modal.connect();
+        web3Provider = new ethers.providers.Web3Provider(instance);
+        signer = web3Provider.getSigner();
+        userAddress = await signer.getAddress();
+
+        const btn = document.getElementById("walletBtn");
+        if (btn) {
+          btn.innerText = "🔌 " + userAddress.slice(0, 6) + "..." + userAddress.slice(-4);
+          btn.classList.remove("bg-yellow-500");
+          btn.classList.add("bg-red-600", "hover:bg-red-500");
+          btn.onclick = onDisconnect;
+        }
+      } catch (err) {
+        console.error("❌ Connect wallet failed", err);
+      }
+    }
+
+    async function onDisconnect() {
+      if (web3Modal) {
+        await web3Modal.clearCachedProvider();
+      }
+      web3Provider = null;
+      signer = null;
+      userAddress = null;
+
+      const btn = document.getElementById("walletBtn");
+      if (btn) {
+        btn.innerText = "🔌 Connect Wallet";
+        btn.classList.remove("bg-red-600", "hover:bg-red-500");
+        btn.classList.add("bg-yellow-500", "hover:bg-yellow-400");
+        btn.onclick = onConnect;
+      }
+    }
+  </script>
+</body>
+</html>
 
 <script>
 /* ----------------------------
