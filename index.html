@@ -378,14 +378,17 @@ function setConnectedState(connected) {
   }
 }
 
-// ===== Wallet Connect (Web3Modal Hybrid + OKX) =====
+<!-- ============================
+     SCRIPT BLOCKCHAIN & UI (FULL)
+     ============================ -->
+<script>
 let web3Modal, web3Provider, signer, userAddress;
 
 const providerOptions = {
   injected: {
     display: {
       name: "Browser Wallet",
-      description: "MetaMask / OKX / TrustWallet extension"
+      description: "MetaMask / OKX / Trust extension"
     },
     package: null
   },
@@ -393,8 +396,8 @@ const providerOptions = {
     package: window.WalletConnectProvider.default,
     options: {
       rpc: {
-        97: "https://data-seed-prebsc-1-s1.binance.org:8545", // BSC Testnet
-        56: "https://bsc-dataseed.binance.org/"               // BSC Mainnet
+        97: "https://data-seed-prebsc-1-s1.binance.org:8545", // Testnet
+        56: "https://bsc-dataseed.binance.org/"               // Mainnet
       }
     }
   },
@@ -412,7 +415,7 @@ window.addEventListener("load", () => {
     cacheProvider: true,
     providerOptions,
     theme: "dark",
-    disableInjectedProvider: true // ✅ paksa popup selalu muncul
+    disableInjectedProvider: true // ✅ popup selalu muncul
   });
 });
 
@@ -425,7 +428,6 @@ async function onConnect() {
 
     setConnectedState(true);
 
-    // update saldo awal (jika fungsi tersedia)
     if (typeof updateBalances === "function") updateBalances();
     if (typeof BSC_CHAIN_ID !== "undefined" && BSC_CHAIN_ID === '0x61') {
       if (typeof updateStaked === "function") updateStaked();
@@ -443,10 +445,8 @@ async function onDisconnect() {
   if (web3Modal) await web3Modal.clearCachedProvider();
   web3Provider = null; signer = null; userAddress = null;
   setConnectedState(false);
-  const bnbBox = document.getElementById('bnbBalance');
-  const tokenBox = document.getElementById('tokenBalance');
-  if (bnbBox) bnbBox.innerText = '0 BNB';
-  if (tokenBox) tokenBox.innerText = '0 KN';
+  document.getElementById('bnbBalance')?.innerText = '0 BNB';
+  document.getElementById('tokenBalance')?.innerText = '0 KN';
   showToast("🔌 Wallet disconnected", "warning");
 }
 </script>
