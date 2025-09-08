@@ -32,11 +32,6 @@
   </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
- <!-- isi web + tombol -->
-  <button id="walletBtn" onclick="onConnect()" 
-    class="px-4 py-2 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400">
-    🔌 Connect Wallet
-  </button>
 
   <!-- NAVBAR -->
 <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
@@ -81,14 +76,10 @@
       <option value="en">EN</option>
     </select>
 
-    <!-- Connect Button -->
-    <button id="connectBtn" onclick="openModal()"
-  class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm"
-  data-i18n="connect">
-  Connect
+    <button id="walletBtn" onclick="onConnect()" 
+  class="px-4 py-2 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400">
+  🔌 Connect
 </button>
-  </div>
-</div>
 
   <!-- MOBILE MENU -->
   <div id="mobileMenu" class="md:hidden hidden absolute left-0 right-0 top-16 bg-gray-900 border-t border-gray-700 px-4 py-3 space-y-2 w-full">
@@ -305,80 +296,6 @@
     </div>
   </footer>
 
-  <!-- WALLET MODAL -->
-  <div id="walletModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
-    <div class="bg-gray-800 rounded-2xl p-6 w-80 shadow-lg text-gray-100 glow-hover">
-      <h2 class="text-lg font-bold mb-4 text-center">Connect Wallet</h2>
-      <div class="space-y-3">
-        <button onclick="selectWallet('metamask')" class="w-full border border-gray-600 rounded-lg py-2 hover:bg-gray-700 glow-hover">🦊 MetaMask</button>
-        <button onclick="selectWallet('okx')" class="w-full border border-gray-600 rounded-lg py-2 hover:bg-gray-700 glow-hover">⚫ OKX Wallet</button>
-      </div>
-      <button onclick="closeModal()" class="w-full mt-3 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 glow-hover">Cancel</button>
-    </div>
-  </div>
-    <!-- Fungsi connect/disconnect diletakkan di akhir -->
-  <script>
-    let web3Modal, web3Provider, signer, userAddress;
-
-    const providerOptions = {
-      walletconnect: {
-        package: window.WalletConnectProvider.default,
-        options: {
-          rpc: {
-            97: "https://data-seed-prebsc-1-s1.binance.org:8545",
-            56: "https://bsc-dataseed.binance.org/"
-          }
-        }
-      }
-    };
-
-    window.addEventListener("load", () => {
-      web3Modal = new window.Web3Modal.default({
-        cacheProvider: true,
-        providerOptions,
-        theme: "dark"
-      });
-    });
-
-    async function onConnect() {
-      try {
-        const instance = await web3Modal.connect();
-        web3Provider = new ethers.providers.Web3Provider(instance);
-        signer = web3Provider.getSigner();
-        userAddress = await signer.getAddress();
-
-        const btn = document.getElementById("walletBtn");
-        if (btn) {
-          btn.innerText = "🔌 " + userAddress.slice(0, 6) + "..." + userAddress.slice(-4);
-          btn.classList.remove("bg-yellow-500");
-          btn.classList.add("bg-red-600", "hover:bg-red-500");
-          btn.onclick = onDisconnect;
-        }
-      } catch (err) {
-        console.error("❌ Connect wallet failed", err);
-      }
-    }
-
-    async function onDisconnect() {
-      if (web3Modal) {
-        await web3Modal.clearCachedProvider();
-      }
-      web3Provider = null;
-      signer = null;
-      userAddress = null;
-
-      const btn = document.getElementById("walletBtn");
-      if (btn) {
-        btn.innerText = "🔌 Connect Wallet";
-        btn.classList.remove("bg-red-600", "hover:bg-red-500");
-        btn.classList.add("bg-yellow-500", "hover:bg-yellow-400");
-        btn.onclick = onConnect;
-      }
-    }
-  </script>
-</body>
-</html>
-
 <script>
 /* ----------------------------
    SCRIPT BLOCKCHAIN & UI (FULL)
@@ -565,52 +482,6 @@ async function ensureWalletOnSelectedChain(){
       console.warn('Switch chain failed', err);
     }
   }
-}
-
-// ========== WALLET CONNECT ==========
-async function connectMetaMask(){
-  if(!window.ethereum) return alert('MetaMask tidak ditemukan. Install MetaMask terlebih dahulu.');
-  try {
-    await ensureWalletOnSelectedChain();
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send('eth_requestAccounts', []);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-
-    setConnectedState(true);
-    await updateBalances();
-    if(BSC_CHAIN_ID === '0x61'){ await updateStaked(); await updateReward(); }
-    closeModal();
-  } catch(err){
-    console.error('connectMetaMask error', err);
-    alert('Gagal connect: ' + (err?.message || err));
-    setConnectedState(false);
-  }
-}
-
-async function connectOKX(){
-  if(!(window.okxwallet && window.okxwallet.request)) return alert('OKX Wallet tidak ditemukan.');
-  try {
-    await ensureWalletOnSelectedChain();
-    provider = new ethers.providers.Web3Provider(window.okxwallet);
-    await provider.send('eth_requestAccounts', []);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-
-    setConnectedState(true);
-    await updateBalances();
-    if(BSC_CHAIN_ID === '0x61'){ await updateStaked(); await updateReward(); }
-    closeModal();
-  } catch(err){
-    console.error('connectOKX error', err);
-    alert('Gagal connect: ' + (err?.message || err));
-    setConnectedState(false);
-  }
-}
-
-function selectWallet(which){
-  if(which === 'metamask') connectMetaMask();
-  else if(which === 'okx') connectOKX();
 }
 
 // ========== UPDATE BALANCES ==========
