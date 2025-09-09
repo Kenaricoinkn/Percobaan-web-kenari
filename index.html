@@ -1,21 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KenariCoin Dashboard</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- WalletConnect v2 UMD -->
+
+  <!-- WalletConnect v2 UMD & Ethers -->
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
-  <link rel="icon" href="img/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <link rel="manifest" href="manifest.json">
+
+  <link rel="icon" href="img/logo.png" />
   <meta name="theme-color" content="#FACC15" />
 
   <style>
+    /* basic page animations + utility */
     .page-section { opacity:0; transform:translateY(10px); transition:opacity .35s ease,transform .35s ease; display:none; }
     .page-section.active { display:block; opacity:1; transform:translateY(0); }
     .glow-hover:hover { box-shadow:0 0 12px rgba(250,204,21,.7); transition:box-shadow .25s ease; }
+
+    /* Modal fancy */
+    @keyframes popupShow { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+    .modal-animate { animation: popupShow .32s cubic-bezier(.2,.9,.2,1) both; }
+    .modal-bg { backdrop-filter: blur(6px); background: rgba(3,7,18,0.55); }
+    .wallet-btn { transition: all .22s ease; }
+    .wallet-btn:hover { transform: translateY(-3px) scale(1.02); background: linear-gradient(135deg,#facc15,#fbbf24); color:#000; box-shadow:0 6px 20px rgba(0,0,0,.45); }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
@@ -23,53 +34,42 @@
   <!-- NAVBAR -->
   <nav class="bg-gray-800 shadow fixed w-full z-30 top-0 border-b border-gray-700">
     <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-  <!-- LEFT: Hamburger + Logo + Nama -->
-  <div class="flex items-center gap-3">
-  <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
-  <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
+      <!-- LEFT -->
+      <div class="flex items-center gap-3">
+        <button id="menuBtn" class="md:hidden p-2 rounded hover:bg-gray-700" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+        <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full">
+        <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap block md:hidden">KN</span>
+        <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap hidden md:block">KenariCoin</span>
+      </div>
 
-  <!-- Singkatan untuk HP -->
-  <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap block md:hidden">KN</span>
+      <!-- CENTER -->
+      <div id="navLinks" class="hidden md:flex space-x-6">
+        <a href="#" onclick="navigate('home')" class="hover:text-yellow-400" data-i18n="home">Home</a>
+        <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400" data-i18n="wallet">Wallet</a>
+        <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400" data-i18n="staking">Staking</a>
+        <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
+        <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
+        <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
+        <a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400" data-i18n="leaderboard">Leaderboard</a>
+      </div>
 
-  <!-- Nama lengkap untuk Desktop -->
-  <span class="font-bold text-lg text-yellow-400 select-none whitespace-nowrap hidden md:block">KenariCoin</span>
-</div>
+      <!-- RIGHT -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <select id="networkSwitcher" onchange="switchNetwork(this.value)" class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
+          <option value="testnet">Testnet</option>
+          <option value="mainnet">Mainnet</option>
+        </select>
 
-  <!-- CENTER: Nav Links (desktop only) -->
-  <div id="navLinks" class="hidden md:flex space-x-6">
-  <a href="#" onclick="navigate('home')" class="hover:text-yellow-400" data-i18n="home">Home</a>
-  <a href="#" onclick="navigate('wallet')" class="hover:text-yellow-400" data-i18n="wallet">Wallet</a>
-  <a href="#" onclick="navigate('staking')" class="hover:text-yellow-400" data-i18n="staking">Staking</a>
-  <a href="#" onclick="navigate('about')" class="hover:text-yellow-400" data-i18n="about">About</a>
-  <a href="#" onclick="navigate('contact')" class="hover:text-yellow-400" data-i18n="contact">Contact</a>
-  <a href="#" onclick="navigate('faq')" class="hover:text-yellow-400" data-i18n="faq">FAQ</a>
-  <a href="#" onclick="navigate('leaderboard')" class="hover:text-yellow-400" data-i18n="leaderboard">Leaderboard</a>
-</div>
+        <select id="langSwitcher" onchange="switchLang(this.value)" class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
+          <option value="id">ID</option>
+          <option value="en">EN</option>
+        </select>
 
-  <!-- RIGHT: Network + Language + Connect -->
-  <div class="flex items-center gap-2 flex-shrink-0">
-    <!-- Network Switcher -->
-    <select id="networkSwitcher" onchange="switchNetwork(this.value)"
-      class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
-      <option value="testnet">Testnet</option>
-      <option value="mainnet">Mainnet</option>
-    </select>
-
-    <!-- Language Switcher -->
-    <select id="langSwitcher" onchange="switchLang(this.value)"
-      class="px-2 py-1 rounded bg-gray-700 text-yellow-400 text-sm">
-      <option value="id">ID</option>
-      <option value="en">EN</option>
-    </select>
-
-    <!-- Connect Button -->
-    <button id="connectBtn" onclick="openModal()"
-  class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm"
-  data-i18n="connect">
-  Connect
-</button>
-  </div>
-</div>
+        <button id="connectBtn" onclick="openModal()" class="px-3 py-1.5 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 shadow glow-hover text-sm" data-i18n="connect">
+          Connect
+        </button>
+      </div>
+    </div>
 
     <div id="mobileMenu" class="md:hidden hidden border-t border-gray-700 bg-gray-800 px-4 py-3 space-y-2">
       <a href="#" onclick="navigate('home'); toggleMenu(false)" class="block hover:text-yellow-400">Home</a>
@@ -82,90 +82,75 @@
     </div>
   </nav>
 
-  <!-- PAGES -->
-<main class="flex-grow px-4 pt-24 pb-10">
-  <!-- Home -->
-  <section id="home" class="page-section text-center active">
-    <img src="img/logo.png" alt="KenariCoin Logo" class="w-32 h-32 rounded-full mx-auto shadow-lg border border-yellow-400 glow-hover">
-    <h1 class="text-3xl font-bold mt-4 text-yellow-400" data-i18n="welcome">
-      Selamat Datang di KenariCoin
-    </h1>
+  <!-- MAIN PAGES -->
+  <main class="flex-grow px-4 pt-24 pb-10">
+    <!-- HOME -->
+    <section id="home" class="page-section text-center active">
+      <img src="img/logo.png" alt="KenariCoin Logo" class="w-32 h-32 rounded-full mx-auto shadow-lg border border-yellow-400 glow-hover">
+      <h1 class="text-3xl font-bold mt-4 text-yellow-400" data-i18n="welcome">Selamat Datang di KenariCoin</h1>
 
-    <div class="mt-6 max-w-xl mx-auto bg-gray-800 shadow rounded-xl p-4 text-gray-300 glow-hover">
-      <h3 class="font-bold mb-2">📜 Contract Address</h3>
-      <div class="flex items-center justify-between gap-3">
-        <span id="contractAddr" class="text-sm break-all"></span>
-        <button onclick="copyContract()" class="px-3 py-1 bg-yellow-500 text-black rounded-lg text-sm hover:bg-yellow-400 glow-hover">Copy</button>
+      <div class="mt-6 max-w-xl mx-auto bg-gray-800 shadow rounded-xl p-4 text-gray-300 glow-hover">
+        <h3 class="font-bold mb-2">📜 Contract Address</h3>
+        <div class="flex items-center justify-between gap-3">
+          <span id="contractAddr" class="text-sm break-all"></span>
+          <button onclick="copyContract()" class="px-3 py-1 bg-yellow-500 text-black rounded-lg text-sm hover:bg-yellow-400 glow-hover">Copy</button>
+        </div>
       </div>
-    </div>
-    
-  <!-- Highlight Box -->
-<div class="mt-8 max-w-xl mx-auto bg-yellow-500 text-black p-4 rounded-xl shadow text-center font-semibold glow-hover animate-bounce">
-  🚀 Staking Rewards & Airdrop Coming Soon!
-</div>
 
-<!-- 🔽 Tambahan Tombol Buy & Twitter di sini 🔽 -->
-<div class="mt-6 flex justify-center gap-4">
-  <a href="https://pancakeswap.finance/swap?outputCurrency=0x1390f63AF92448c46368443496a2bfc1469558de&chain=bsc" 
-     target="_blank"
-     class="px-6 py-3 bg-green-500 hover:bg-green-400 text-white rounded-xl font-bold shadow-lg transform hover:scale-105 transition">
-     🛒 Buy KN
-  </a>
-  <a href="https://x.com/itsmeaukwa36342?t=ytLOQr64DID9yRRMCuhy1g&s=09" 
-     target="_blank"
-     class="px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white rounded-xl font-bold shadow-lg transform hover:scale-105 transition">
-     🐦 Twitter
-  </a>
-</div>
+      <div class="mt-8 max-w-xl mx-auto bg-yellow-500 text-black p-4 rounded-xl shadow text-center font-semibold glow-hover animate-bounce">
+        🚀 Staking Rewards & Airdrop Coming Soon!
+      </div>
 
-<!-- Fitur Utama -->
-<div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
-    <div class="text-3xl mb-2">⚡</div>
-    <h3 class="font-bold text-yellow-400">Cepat & Murah</h3>
-    <p class="text-gray-300 mt-2 text-sm">Transaksi kilat dengan biaya sangat rendah di jaringan BNB Smart Chain.</p>
-  </div>
-  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
-    <div class="text-3xl mb-2">🔒</div>
-    <h3 class="font-bold text-yellow-400">Aman & Transparan</h3>
-    <p class="text-gray-300 mt-2 text-sm">Smart contract diaudit dan berjalan transparan di blockchain publik.</p>
-  </div>
-  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
-    <div class="text-3xl mb-2">🌍</div>
-    <h3 class="font-bold text-yellow-400">Komunitas Global</h3>
-    <p class="text-gray-300 mt-2 text-sm">Didukung komunitas aktif yang siap mendorong adopsi KenariCoin.</p>
-  </div>
-  <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
-    <div class="text-3xl mb-2">💰</div>
-    <h3 class="font-bold text-yellow-400">Staking Reward</h3>
-    <p class="text-gray-300 mt-2 text-sm">Holder KN bisa mendapatkan imbal hasil melalui staking.</p>
-  </div>
-</div>
+      <div class="mt-6 flex justify-center gap-4">
+        <a href="https://pancakeswap.finance/swap?outputCurrency=0x1390f63AF92448c46368443496a2bfc1469558de&chain=bsc" target="_blank" class="px-6 py-3 bg-green-500 hover:bg-green-400 text-white rounded-xl font-bold shadow-lg transform hover:scale-105 transition">🛒 Buy KN</a>
+        <a href="https://x.com/itsmeaukwa36342?t=ytLOQr64DID9yRRMCuhy1g&s=09" target="_blank" class="px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white rounded-xl font-bold shadow-lg transform hover:scale-105 transition">🐦 Twitter</a>
+      </div>
 
-<!-- Tokenomics -->
-<div class="mt-12 max-w-3xl mx-auto bg-gray-800 p-6 rounded-xl shadow glow-hover">
-  <h3 class="text-xl font-bold mb-4 text-yellow-400">📊 Tokenomics</h3>
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-gray-300">
-    <div><span class="font-bold text-yellow-400">Symbol</span><br>KN</div>
-    <div><span class="font-bold text-yellow-400">Decimals</span><br>6</div>
-    <div><span class="font-bold text-yellow-400">Total Supply</span><br>500 Triliun</div>
-    <div><span class="font-bold text-yellow-400">Network</span><br>BSC (BEP-20)</div>
-  </div>
-</div>
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+          <div class="text-3xl mb-2">⚡</div>
+          <h3 class="font-bold text-yellow-400">Cepat & Murah</h3>
+          <p class="text-gray-300 mt-2 text-sm">Transaksi kilat dengan biaya sangat rendah di jaringan BNB Smart Chain.</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+          <div class="text-3xl mb-2">🔒</div>
+          <h3 class="font-bold text-yellow-400">Aman & Transparan</h3>
+          <p class="text-gray-300 mt-2 text-sm">Smart contract diaudit dan berjalan transparan di blockchain publik.</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+          <div class="text-3xl mb-2">🌍</div>
+          <h3 class="font-bold text-yellow-400">Komunitas Global</h3>
+          <p class="text-gray-300 mt-2 text-sm">Didukung komunitas aktif yang siap mendorong adopsi KenariCoin.</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow text-center glow-hover">
+          <div class="text-3xl mb-2">💰</div>
+          <h3 class="font-bold text-yellow-400">Staking Reward</h3>
+          <p class="text-gray-300 mt-2 text-sm">Holder KN bisa mendapatkan imbal hasil melalui staking.</p>
+        </div>
+      </div>
 
-<!-- Roadmap -->
-<div class="mt-12 max-w-2xl mx-auto text-left">
-  <h3 class="text-xl font-bold mb-4 text-yellow-400">🛣️ Roadmap</h3>
-  <ul class="space-y-2 text-gray-300">
-    <li>✅ Testnet Launch</li>
-    <li>🚀 Mainnet Deployment</li>
-    <li>📈 Listing di DEX</li>
-    <li>🌐 Ekspansi Ekosistem</li>
-  </ul>
-</div>
-  </section>
+      <div class="mt-12 max-w-3xl mx-auto bg-gray-800 p-6 rounded-xl shadow glow-hover">
+        <h3 class="text-xl font-bold mb-4 text-yellow-400">📊 Tokenomics</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-gray-300">
+          <div><span class="font-bold text-yellow-400">Symbol</span><br>KN</div>
+          <div><span class="font-bold text-yellow-400">Decimals</span><br>6</div>
+          <div><span class="font-bold text-yellow-400">Total Supply</span><br>500 Triliun</div>
+          <div><span class="font-bold text-yellow-400">Network</span><br>BSC (BEP-20)</div>
+        </div>
+      </div>
 
-    <!-- Wallet -->
+      <div class="mt-12 max-w-2xl mx-auto text-left">
+        <h3 class="text-xl font-bold mb-4 text-yellow-400">🛣️ Roadmap</h3>
+        <ul class="space-y-2 text-gray-300">
+          <li>✅ Testnet Launch</li>
+          <li>🚀 Mainnet Deployment</li>
+          <li>📈 Listing di DEX</li>
+          <li>🌐 Ekspansi Ekosistem</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- WALLET -->
     <section id="wallet" class="page-section max-w-md mx-auto text-center">
       <h2 class="text-2xl font-bold mb-4 text-yellow-400">Wallet Balance</h2>
       <div class="bg-gray-800 rounded-xl shadow p-6 text-left glow-hover">
@@ -174,35 +159,23 @@
       </div>
     </section>
 
-    <!-- Staking -->
-<section id="staking" class="page-section max-w-md mx-auto text-center">
-  <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="staking_title">
-    Staking KN
-  </h2>
-  <div id="stakingContent"></div>
-</section>
+    <!-- STAKING -->
+    <section id="staking" class="page-section max-w-md mx-auto text-center">
+      <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="staking_title">Staking KN</h2>
+      <div id="stakingContent"></div>
+    </section>
 
-    <!-- About -->
-<section id="about" class="page-section max-w-2xl mx-auto text-center">
-  <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="about_title">
-    Tentang KenariCoin
-  </h2>
-  <p class="text-gray-300 leading-relaxed" data-i18n="about_desc">
-    KenariCoin (KN) adalah aset digital berbasis BEP-20 yang berjalan di jaringan BNB Smart Chain. 
-    Didesain khusus untuk mendukung ekosistem DeFi, KenariCoin hadir sebagai jembatan antara 
-    komunitas, inovasi finansial, dan adopsi blockchain yang lebih luas. 
-    <br><br>
-    Dengan total suplai yang terbatas, mekanisme staking yang menguntungkan, serta dukungan komunitas 
-    yang terus berkembang, KenariCoin bukan hanya sekadar token — tetapi pondasi untuk membangun 
-    ekosistem keuangan terdesentralisasi yang inklusif, aman, dan berkelanjutan. 
-    <br><br>
-    Visi utama KenariCoin adalah menjadi pilihan utama bagi investor maupun pengguna harian 
-    yang ingin merasakan manfaat nyata dari teknologi blockchain: transaksi cepat, biaya rendah, 
-    serta peluang imbal hasil dari DeFi.
-  </p>
-</section>
+    <!-- ABOUT -->
+    <section id="about" class="page-section max-w-2xl mx-auto text-center">
+      <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="about_title">Tentang KenariCoin</h2>
+      <p class="text-gray-300 leading-relaxed" data-i18n="about_desc">
+        KenariCoin (KN) adalah aset digital berbasis BEP-20 yang berjalan di jaringan BNB Smart Chain. 
+        Didesain khusus untuk mendukung ekosistem DeFi, KenariCoin hadir sebagai jembatan antara 
+        komunitas, inovasi finansial, dan adopsi blockchain yang lebih luas.
+      </p>
+    </section>
 
-    <!-- Contact -->
+    <!-- CONTACT -->
     <section id="contact" class="page-section max-w-2xl mx-auto text-center">
       <h2 class="text-2xl font-bold mb-4 text-yellow-400">Contact</h2>
       <p>📧 Email: <a href="mailto:kenaricoinkn@gmail.com" class="text-yellow-400 font-semibold hover:underline">kenaricoinkn@gmail.com</a></p>
@@ -210,76 +183,47 @@
     </section>
 
     <!-- FAQ -->
-<section id="faq" class="page-section max-w-2xl mx-auto text-center">
-  <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="faq_title">
-    FAQ
-  </h2>
-  <div class="space-y-4 text-gray-300 text-left">
-    <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
-      <h3 class="font-semibold" data-i18n="faq_q1">❓ Apa itu KenariCoin?</h3>
-      <p data-i18n="faq_a1">
-        KenariCoin (KN) adalah token BEP-20 di jaringan BNB Smart Chain yang dirancang untuk 
-        menghadirkan solusi keuangan terdesentralisasi (DeFi) yang mudah diakses, aman, dan 
-        transparan bagi semua orang.
-      </p>
-    </div>
+    <section id="faq" class="page-section max-w-2xl mx-auto text-center">
+      <h2 class="text-2xl font-bold mb-4 text-yellow-400" data-i18n="faq_title">FAQ</h2>
+      <div class="space-y-4 text-gray-300 text-left">
+        <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
+          <h3 class="font-semibold" data-i18n="faq_q1">❓ Apa itu KenariCoin?</h3>
+          <p data-i18n="faq_a1">KenariCoin (KN) adalah token BEP-20 di jaringan BNB Smart Chain yang dirancang untuk menghadirkan solusi keuangan terdesentralisasi (DeFi) yang mudah diakses, aman, dan transparan bagi semua orang.</p>
+        </div>
+        <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
+          <h3 class="font-semibold" data-i18n="faq_q2">❓ Apa keunggulan KenariCoin?</h3>
+          <p data-i18n="faq_a2">🔹 Transaksi cepat & biaya rendah<br>🔹 Dukungan penuh untuk staking & yield farming<br>🔹 Ekosistem ramah komunitas<br>🔹 Potensi pertumbuhan jangka panjang</p>
+        </div>
+        <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
+          <h3 class="font-semibold" data-i18n="faq_q3">❓ Bagaimana cara mendapatkan KenariCoin?</h3>
+          <p data-i18n="faq_a3">Saat ini, KenariCoin bisa diperoleh melalui faucet (untuk testnet), airdrop komunitas, serta nantinya akan tersedia di berbagai DEX (Decentralized Exchange) setelah listing.</p>
+        </div>
+        <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
+          <h3 class="font-semibold" data-i18n="faq_q4">❓ Apakah ada fitur staking?</h3>
+          <p data-i18n="faq_a4">Ya ✅. Staking sudah tersedia di testnet dan akan segera hadir di mainnet. Dengan staking, holder KN bisa memperoleh reward tambahan hanya dengan mengunci token mereka di smart contract staking.</p>
+        </div>
+      </div>
+    </section>
 
-    <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
-      <h3 class="font-semibold" data-i18n="faq_q2">❓ Apa keunggulan KenariCoin?</h3>
-      <p data-i18n="faq_a2">
-        🔹 Transaksi cepat & biaya rendah <br>
-        🔹 Dukungan penuh untuk staking & yield farming <br>
-        🔹 Ekosistem ramah komunitas <br>
-        🔹 Potensi pertumbuhan jangka panjang sebagai aset digital DeFi.
-      </p>
-    </div>
-
-    <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
-      <h3 class="font-semibold" data-i18n="faq_q3">❓ Bagaimana cara mendapatkan KenariCoin?</h3>
-      <p data-i18n="faq_a3">
-        Saat ini, KenariCoin bisa diperoleh melalui faucet (untuk testnet), airdrop komunitas, 
-        serta nantinya akan tersedia di berbagai DEX (Decentralized Exchange) setelah listing.
-      </p>
-    </div>
-
-    <div class="bg-gray-800 p-4 shadow rounded-xl glow-hover">
-      <h3 class="font-semibold" data-i18n="faq_q4">❓ Apakah ada fitur staking?</h3>
-      <p data-i18n="faq_a4">
-        Ya ✅. Staking sudah tersedia di testnet dan akan segera hadir di mainnet. 
-        Dengan staking, holder KN bisa memperoleh reward tambahan hanya dengan 
-        mengunci token mereka di smart contract staking.
-      </p>
-    </div>
-  </div>
-</section>
-  <!-- Leaderboard -->
-<section id="leaderboard" class="page-section max-w-4xl mx-auto text-center">
-  <h2 class="text-2xl font-bold mb-6 text-yellow-400">🏆 Staking Leaderboard</h2>
-
-  <!-- Top 10 -->
-  <div class="overflow-x-auto">
-    <table class="w-full border border-gray-700 rounded-xl overflow-hidden">
-      <thead class="bg-gray-800 text-yellow-400">
-        <tr>
-          <th class="px-4 py-2 text-left">Rank</th>
-          <th class="px-4 py-2 text-left">Address</th>
-          <th class="px-4 py-2 text-right">Staked KN</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboardBody" class="bg-gray-900 divide-y divide-gray-700">
-        <!-- Top 10 will load here -->
-      </tbody>
-    </table>
-  </div>
-
-  <!-- View All -->
-  <div class="mt-6">
-    <button onclick="viewAllLeaderboard()" 
-      class="px-6 py-3 bg-yellow-500 text-black rounded-xl font-bold shadow hover:bg-yellow-400 transform hover:scale-105 transition">
-      🔍 View All Stakers
-    </button>
-  </div>
-</section>
+    <!-- LEADERBOARD -->
+    <section id="leaderboard" class="page-section max-w-4xl mx-auto text-center">
+      <h2 class="text-2xl font-bold mb-6 text-yellow-400">🏆 Staking Leaderboard</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border border-gray-700 rounded-xl overflow-hidden">
+          <thead class="bg-gray-800 text-yellow-400">
+            <tr>
+              <th class="px-4 py-2 text-left">Rank</th>
+              <th class="px-4 py-2 text-left">Address</th>
+              <th class="px-4 py-2 text-right">Staked KN</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody" class="bg-gray-900 divide-y divide-gray-700"></tbody>
+        </table>
+      </div>
+      <div class="mt-6">
+        <button onclick="viewAllLeaderboard()" class="px-6 py-3 bg-yellow-500 text-black rounded-xl font-bold shadow hover:bg-yellow-400 transform hover:scale-105 transition">🔍 View All Stakers</button>
+      </div>
+    </section>
   </main>
 
   <!-- FOOTER -->
@@ -294,55 +238,46 @@
     </div>
   </footer>
 
-<!-- Connect Modal -->
-<div id="walletModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-  <div class="bg-gray-900 p-6 rounded-2xl shadow-lg max-w-sm w-full text-center">
-    <h2 class="text-lg font-bold text-yellow-400 mb-4">Connect Wallet</h2>
+  <!-- CONNECT WALLET MODAL (fancy) -->
+  <div id="walletModal" class="hidden fixed inset-0 items-center justify-center z-50 modal-bg">
+    <div class="bg-gray-900/90 p-6 rounded-2xl w-96 max-w-[92%] shadow-2xl modal-animate border border-gray-700">
+      <h2 class="text-2xl font-bold mb-5 text-center text-yellow-400">🔗 Connect Wallet</h2>
 
-    <!-- MetaMask -->
-    <button onclick="selectWallet('metamask')" 
-      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
-      <img src="img/metamask.png" alt="MetaMask" class="w-5 h-5"> MetaMask
-    </button>
+      <div class="grid gap-3">
+        <button onclick="connectMetaMask()" class="wallet-btn w-full flex items-center gap-3 p-3 bg-gray-800 rounded-xl shadow">
+          <img src="img/metamask.png" class="w-8 h-8 rounded-full bg-white p-1"> MetaMask / Extension
+        </button>
 
-    <!-- OKX -->
-    <button onclick="selectWallet('okx')" 
-      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
-      <img src="img/okx.png" alt="OKX" class="w-5 h-5"> OKX Wallet
-    </button>
+        <button onclick="connectWalletConnect()" class="wallet-btn w-full flex items-center gap-3 p-3 bg-gray-800 rounded-xl shadow">
+          <img src="img/walletconnect.png" class="w-8 h-8"> WalletConnect (QR / Mobile)
+        </button>
 
-    <!-- WalletConnect -->
-    <button onclick="selectWallet('walletconnect')" 
-      class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg mb-3 flex items-center justify-center gap-2">
-      <img src="img/walletconnect.png" alt="WalletConnect" class="w-5 h-5"> WalletConnect
-    </button>
+        <button onclick="connectOKX()" class="wallet-btn w-full flex items-center gap-3 p-3 bg-gray-800 rounded-xl shadow">
+          <img src="img/okx.png" class="w-8 h-8 rounded-full bg-white p-1"> OKX Wallet
+        </button>
 
-    <!-- Cancel -->
-    <button onclick="closeModal()" 
-      class="w-full px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg">
-      Cancel
-    </button>
+        <button onclick="closeModal()" class="mt-4 w-full py-2 rounded-xl border border-gray-600 text-gray-400 hover:text-white hover:border-yellow-400">Cancel</button>
+      </div>
+    </div>
   </div>
-</div>
 
 <script>
-/* ----------------------------
-   SCRIPT BLOCKCHAIN & UI (FULL)
-   ---------------------------- */
+/* =============================
+   FULL SCRIPT: UI, NETWORK, WALLET
+   ============================= */
 
-// ======= Konstanta & Helper Global =======
-const INFURA_PROJECT_ID = "04d95c797b104ad69d34f7e2feccf794"; // ⚠️ GANTI dengan Project ID dari Infura
+// -------- CONFIG --------
+const INFURA_PROJECT_ID = "YOUR_INFURA_PROJECT_ID"; // <-- GANTI disini dengan Infura Project ID
 
-// ===== Utility UI =====
+// -------- UI Helpers --------
 function showPage(id){ document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); const el=document.getElementById(id); if(el) el.classList.add('active'); }
 function navigate(id){ showPage(id); closeModal(); toggleMenu(false); if(id) history.replaceState(null,'','#'+id); }
 function toggleMenu(force){ const m=document.getElementById('mobileMenu'); if(!m) return; if(typeof force==='boolean'){ m.classList.toggle('hidden', !force); } else m.classList.toggle('hidden'); }
-function openModal(){ document.getElementById('walletModal').classList.remove('hidden'); }
-function closeModal(){ document.getElementById('walletModal').classList.add('hidden'); }
-function copyContract(){ const a=document.getElementById('contractAddr')?.innerText; if(a){ navigator.clipboard.writeText(a); alert('✅ Disalin: '+a); } }
-function isMobile(){ return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); }
+function openModal(){ const modal=document.getElementById('walletModal'); modal.classList.remove('hidden'); }
+function closeModal(){ const modal=document.getElementById('walletModal'); modal.classList.add('hidden'); }
+function copyContract(){ const a=document.getElementById('contractAddr')?.innerText; if(a){ navigator.clipboard.writeText(a); showToast('✅ Disalin: '+a, 'success'); } }
+function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
 
-// simple toast
 function showToast(msg, type='info') {
   try {
     const toast = document.createElement('div');
@@ -354,17 +289,13 @@ function showToast(msg, type='info') {
     toast.innerText = msg;
     document.body.appendChild(toast);
     setTimeout(()=>{ try{ toast.remove(); }catch(e){} }, 3600);
-  } catch(e){
-    console.log('showToast error', e);
-  }
+  } catch(e){ console.log('toast error', e); }
 }
 
-// connect button state
 function setConnectedState(connected) {
   const btn = document.getElementById('connectBtn');
   if(!btn) return;
   if(connected) {
-    // tampilkan address singkat jika ada
     if (userAddress) {
       const short = userAddress.slice(0,6) + '...' + userAddress.slice(-4);
       btn.innerText = short;
@@ -383,7 +314,7 @@ function setConnectedState(connected) {
   }
 }
 
-// ===== Blockchain / contract variables =====
+// -------- Blockchain / Contracts --------
 let KN = '', STAKING_CONTRACT = '', FAUCET_CONTRACT = '', BSC_CHAIN_ID = '';
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
@@ -402,13 +333,9 @@ const FAUCET_ABI = ["function faucet() external"];
 let provider = null, signer = null, userAddress = null;
 
 // helper
-function formatToken(amountBigNumber, decimals){
-  try { return Number(ethers.utils.formatUnits(amountBigNumber, decimals)); }
-  catch(e){ return 0; }
-}
-function numericChainId(){ return (BSC_CHAIN_ID === '0x61') ? 97 : 56; } // 97 testnet, 56 mainnet
+function numericChainId(){ return (BSC_CHAIN_ID === '0x61') ? 97 : 56; }
 
-// ========== SWITCH NETWORK ==========
+// -------- Network Switcher --------
 function switchNetwork(mode){
   if(mode === 'testnet'){
     KN = "0xaD3Ce803305615C73CfEB2239254501738FD91b8";
@@ -441,7 +368,7 @@ function switchNetwork(mode){
   }
 }
 
-// ========== STAKING UI ==========
+// -------- Staking UI --------
 function loadStakingForm(){
   document.getElementById('stakingContent').innerHTML = `
     <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
@@ -460,7 +387,6 @@ function loadStakingForm(){
     </div>
   `;
 }
-
 function loadStakingUnavailable(){
   document.getElementById('stakingContent').innerHTML = `
     <div class="bg-gray-800 rounded-xl shadow p-6 glow-hover">
@@ -471,7 +397,7 @@ function loadStakingUnavailable(){
   `;
 }
 
-// ========== ENSURE WALLET ON SELECTED CHAIN (untuk injected providers) ==========
+// -------- Ensure injected provider on correct chain --------
 async function ensureWalletOnSelectedChain(){
   if(!window.ethereum) return;
   try {
@@ -479,7 +405,6 @@ async function ensureWalletOnSelectedChain(){
     if(chainId === BSC_CHAIN_ID) return;
     await window.ethereum.request({ method: 'wallet_switchEthereumChain', params:[{ chainId: BSC_CHAIN_ID }] });
   } catch(err){
-    // if chain not found (4902), try to add it
     if(err && err.code === 4902){
       try {
         if(BSC_CHAIN_ID === '0x61'){
@@ -505,16 +430,12 @@ async function ensureWalletOnSelectedChain(){
             }]
           });
         }
-      } catch(addErr){
-        console.warn('Add chain failed', addErr);
-      }
-    } else {
-      console.warn('Switch chain failed', err);
-    }
+      } catch(addErr){ console.warn('Add chain failed', addErr); }
+    } else { console.warn('Switch chain failed', err); }
   }
 }
 
-// ========== UNIVERSAL WALLET CONNECT ==========
+// -------- Universal Wallet Connectors --------
 async function connectMetaMask() {
   try {
     if (window.ethereum) {
@@ -526,18 +447,16 @@ async function connectMetaMask() {
 
       setConnectedState(true);
       await updateBalances();
-      if (BSC_CHAIN_ID === "0x61") {
-        await updateStaked();
-        await updateReward();
-      }
+      if (BSC_CHAIN_ID === "0x61") { await updateStaked(); await updateReward(); }
       closeModal();
     } else {
-      // fallback ke WalletConnect (HP / tidak ada extension)
-      await connectWalletConnect();
+      // fallback to WalletConnect for mobile / no-extension
+      if (isMobile()) return connectWalletConnect();
+      showToast("MetaMask extension tidak terdeteksi.", "warning");
     }
   } catch (err) {
     console.error("connectMetaMask error", err);
-    alert("❌ Gagal connect: " + (err?.message || err));
+    showToast("Gagal connect: " + (err?.message || err), "error");
     setConnectedState(false);
   }
 }
@@ -548,8 +467,8 @@ async function connectWalletConnect() {
       throw new Error("WalletConnect provider script tidak ditemukan");
     }
     const wcProvider = await window.WalletConnectEthereumProvider.init({
-      projectId: INFURA_PROJECT_ID,          // ⚠️ GANTI DENGAN INFURA PROJECT ID
-      chains: [numericChainId()],            // ikut networkSwitcher (97 testnet / 56 mainnet)
+      projectId: INFURA_PROJECT_ID,           // <-- gunakan INFURA_PROJECT_ID
+      chains: [numericChainId()],            // default chain numeric (56 or 97)
       showQrModal: true,
       optionalChains: [56,97],
     });
@@ -561,14 +480,11 @@ async function connectWalletConnect() {
 
     setConnectedState(true);
     await updateBalances();
-    if (BSC_CHAIN_ID === "0x61") {
-      await updateStaked();
-      await updateReward();
-    }
+    if (BSC_CHAIN_ID === "0x61") { await updateStaked(); await updateReward(); }
     closeModal();
   } catch (err) {
     console.error("WalletConnect error", err);
-    alert("❌ Gagal connect: " + (err?.message || err));
+    showToast("Gagal connect: " + (err?.message || err), "error");
     setConnectedState(false);
   }
 }
@@ -576,29 +492,27 @@ async function connectWalletConnect() {
 async function connectOKX(){
   try{
     if(window.okxwallet){
-      provider=new ethers.providers.Web3Provider(window.okxwallet);
+      provider = new ethers.providers.Web3Provider(window.okxwallet);
       await provider.send("eth_requestAccounts",[]);
-      signer=provider.getSigner();
-      userAddress=await signer.getAddress();
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
       setConnectedState(true);
       await updateBalances();
       if (BSC_CHAIN_ID === "0x61") { await updateStaked(); await updateReward(); }
       closeModal();
-    } else { alert("❌ OKX Wallet tidak terdeteksi"); }
-  }catch(err){ showToast("❌ "+(err?.message||err),"error"); }
+    } else {
+      showToast("OKX Wallet not detected.", "warning");
+    }
+  }catch(err){ console.error('connectOKX',err); showToast("Gagal: "+(err?.message||err), "error"); }
 }
 
 function selectWallet(which) {
-  if (which === "metamask") {
-    connectMetaMask();
-  } else if (which === "okx") {
-    connectOKX();
-  } else if (which === "walletconnect") {
-    connectWalletConnect();
-  }
+  if (which === "metamask") connectMetaMask();
+  else if (which === "okx") connectOKX();
+  else if (which === "walletconnect") connectWalletConnect();
 }
 
-// ========== UPDATE BALANCES ==========
+// -------- Balances & staking actions --------
 async function updateBalances(){
   if(!provider || !userAddress) return;
   try {
@@ -618,7 +532,6 @@ async function updateBalances(){
   }
 }
 
-// ========== STAKING ACTIONS ==========
 async function doStake(){
   if(!signer) return alert('Hubungkan wallet dulu!');
   if(!STAKING_CONTRACT) return alert('Staking belum tersedia pada jaringan ini.');
@@ -713,17 +626,11 @@ async function updateReward(){
   }
 }
 
-// ========== FAUCET ==========
+// -------- Faucet (with improved error handling) --------
 async function claimFaucet(){
   const btn = document.getElementById('faucetBtn');
-  if(!signer) {
-    showToast('Hubungkan wallet dulu!', "warning");
-    return;
-  }
-  if(!FAUCET_CONTRACT) {
-    showToast('Faucet belum tersedia pada jaringan ini.', "warning");
-    return;
-  }
+  if(!signer) { showToast('Hubungkan wallet dulu!', "warning"); return; }
+  if(!FAUCET_CONTRACT) { showToast('Faucet belum tersedia pada jaringan ini.', "warning"); return; }
   try {
     if(btn){ btn.disabled = true; btn.innerText = 'Claiming...'; }
     showToast('⏳ Mengirim transaksi faucet...', 'info');
@@ -736,33 +643,16 @@ async function claimFaucet(){
     await updateBalances();
   } catch(err){
     console.error('claimFaucet error', err);
-
     let msg = "Gagal claim faucet";
-    try {
-      msg = err?.data?.message || err?.error?.message || err?.reason || err.message || msg;
-      if(typeof msg === 'object') msg = JSON.stringify(msg);
-      msg = String(msg);
-    } catch(e){
-      msg = "Gagal claim faucet";
-    }
-
-    if(msg.toLowerCase().includes("execution reverted")) {
-      msg = msg.split("execution reverted:").pop().trim();
-    }
-
-    if(msg.toLowerCase().includes("internal json-rpc error")) {
-      showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
-    } else if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu") || msg.toLowerCase().includes("only once")) {
-      showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
-    } else {
-      showToast("❌ " + msg, "error");
-    }
-  } finally {
-    if(btn){ btn.disabled = false; btn.innerText = 'Claim Faucet'; }
-  }
+    try { msg = err?.data?.message || err?.error?.message || err?.reason || err.message || msg; if(typeof msg === 'object') msg = JSON.stringify(msg); msg = String(msg); } catch(e){ msg = "Gagal claim faucet"; }
+    if(msg.toLowerCase().includes("execution reverted")) msg = msg.split("execution reverted:").pop().trim();
+    if(msg.toLowerCase().includes("internal json-rpc error")) showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
+    else if(msg.toLowerCase().includes("cooldown") || msg.toLowerCase().includes("tunggu") || msg.toLowerCase().includes("only once")) showToast("⏳ Mohon maaf, faucet hanya bisa diklaim 1x per hari.", "warning");
+    else showToast("❌ " + msg, "error");
+  } finally { if(btn){ btn.disabled = false; btn.innerText = 'Claim Faucet'; } }
 }
 
-// ========== WALLET EVENTS ==========
+// -------- Wallet Events (injected) --------
 if(window.ethereum){
   window.ethereum.on('accountsChanged', async (accs) => {
     if(!accs || accs.length === 0){
@@ -783,148 +673,38 @@ if(window.ethereum){
   window.ethereum.on('chainChanged', () => { setTimeout(()=>location.reload(), 200); });
 }
 
-// ========================
-// Multi-language Support
-// ========================
+// -------- Translations (ID/EN) --------
 const translations = {
-  id: {
-    home: "Beranda",
-    wallet: "Dompet",
-    staking: "Staking",
-    about: "Tentang",
-    contact: "Kontak",
-    faq: "FAQ",
-    welcome: "Selamat Datang di KenariCoin",
-    connect: "Hubungkan Wallet",
-    contract: "📜 Alamat Kontrak",
-    wallet_balance: "Saldo Wallet",
-    about_title: "Tentang KenariCoin",
-    about_desc:
-      "KenariCoin (KN) adalah aset digital berbasis BEP-20 yang berjalan di jaringan BNB Smart Chain.\n\n" +
-      "🔹 <strong>Testnet</strong> → Saat ini fitur <em>staking</em> dan <em>faucet</em> hanya tersedia di testnet. Komunitas bisa mencoba mekanisme reward tanpa risiko finansial.\n\n" +
-      "🔹 <strong>Mainnet</strong> → Kontrak resmi KenariCoin sudah aktif di BNB Smart Chain dan dapat diperdagangkan di DEX seperti PancakeSwap. Fitur staking & faucet akan segera tersedia di mainnet.\n\n" +
-      "Dengan cara ini, pengguna bisa berlatih di testnet sambil menunggu ekosistem di mainnet berkembang sepenuhnya.",
-    faq_title: "FAQ",
-    faq_q1: "❓ Apa itu KenariCoin?",
-    faq_a1:
-      "KenariCoin (KN) adalah token BEP-20 di jaringan BNB Smart Chain yang dirancang untuk menghadirkan solusi keuangan terdesentralisasi (DeFi) yang mudah diakses dan transparan.",
-    faq_q2: "❓ Apa keunggulan KenariCoin?",
-    faq_a2:
-      "🔹 Transaksi cepat & biaya rendah\n🔹 Staking & yield farming\n🔹 Komunitas aktif\n🔹 Potensi pertumbuhan jangka panjang",
-    faq_q3: "❓ Bagaimana cara mendapatkan KenariCoin?",
-    faq_a3:
-      "KenariCoin bisa didapat melalui faucet (testnet), airdrop komunitas, dan nantinya listing di DEX.",
-    faq_q4: "❓ Apakah ada fitur staking?",
-    faq_a4:
-      "Ya ✅. Staking tersedia di testnet dan akan hadir di mainnet segera.",
-    staking_title: "Staking KN",
-    staking_input_label: "Jumlah KN untuk Staking",
-    staking_btn_stake: "Stake",
-    staking_btn_withdraw: "Withdraw",
-    staking_total: "Total Staked",
-    staking_reward: "Reward Tertunda",
-    staking_btn_claim: "Klaim Reward",
-    faucet_title: "Faucet",
-    faucet_desc: "Dapatkan token KN gratis untuk uji coba.",
-    faucet_btn: "Klaim Faucet",
-  },
-
-  en: {
-    home: "Home",
-    wallet: "Wallet",
-    staking: "Staking",
-    about: "About",
-    contact: "Contact",
-    faq: "FAQ",
-    welcome: "Welcome to KenariCoin",
-    connect: "Connect Wallet",
-    contract: "📜 Contract Address",
-    wallet_balance: "Wallet Balance",
-    about_title: "About KenariCoin",
-    about_desc:
-      "KenariCoin (KN) is a BEP-20 digital asset running on the BNB Smart Chain.\n\n" +
-      "🔹 <strong>Testnet</strong> → Currently, staking and faucet are only available on testnet. The community can try reward mechanisms without financial risk.\n\n" +
-      "🔹 <strong>Mainnet</strong> → The official KenariCoin contract is already live on BNB Smart Chain and tradable on DEX such as PancakeSwap. Staking & faucet will soon be available on mainnet.\n\n" +
-      "This allows users to practice on testnet while waiting for the full ecosystem to mature on mainnet.",
-    faq_title: "FAQ",
-    faq_q1: "❓ What is KenariCoin?",
-    faq_a1:
-      "KenariCoin (KN) is a BEP-20 token on BNB Smart Chain built to provide easy, secure, and transparent access to decentralized finance (DeFi).",
-    faq_q2: "❓ What are the advantages of KenariCoin?",
-    faq_a2:
-      "🔹 Fast & low-cost transactions\n🔹 Staking & yield farming support\n🔹 Strong community\n🔹 Long-term growth potential",
-    faq_q3: "❓ How to get KenariCoin?",
-    faq_a3:
-      "KenariCoin can be obtained through faucet (testnet), community airdrops, and future DEX listings.",
-    faq_q4: "❓ Is staking available?",
-    faq_a4:
-      "Yes ✅. Staking is available on testnet and will soon launch on mainnet.",
-    staking_title: "Stake KN",
-    staking_input_label: "Amount of KN to Stake",
-    staking_btn_stake: "Stake",
-    staking_btn_withdraw: "Withdraw",
-    staking_total: "Total Staked",
-    staking_reward: "Pending Reward",
-    staking_btn_claim: "Claim Reward",
-    faucet_title: "Faucet",
-    faucet_desc: "Get free KN tokens for testing.",
-    faucet_btn: "Claim Faucet",
-  },
+  id: { home:"Beranda", wallet:"Dompet", staking:"Staking", about:"Tentang", contact:"Kontak", faq:"FAQ", welcome:"Selamat Datang di KenariCoin", connect:"Hubungkan Wallet", contract:"📜 Alamat Kontrak", wallet_balance:"Saldo Wallet", about_title:"Tentang KenariCoin", about_desc:"KenariCoin (KN) adalah aset digital berbasis BEP-20 yang berjalan di jaringan BNB Smart Chain.\n\n🔹 <strong>Testnet</strong> → Saat ini fitur <em>staking</em> dan <em>faucet</em> hanya tersedia di testnet.\n\n🔹 <strong>Mainnet</strong> → Kontrak resmi KenariCoin sudah aktif di BNB Smart Chain.", faq_title:"FAQ", faq_q1:"❓ Apa itu KenariCoin?", faq_a1:"KenariCoin (KN) adalah token BEP-20...", faq_q2:"❓ Apa keunggulan KenariCoin?", faq_a2:"🔹 Transaksi cepat & biaya rendah\n🔹 Staking & yield farming", faq_q3:"❓ Bagaimana cara mendapatkan KenariCoin?", faq_a3:"KenariCoin bisa didapat melalui faucet (testnet), airdrop komunitas, dan nantinya listing di DEX.", faq_q4:"❓ Apakah ada fitur staking?", faq_a4:"Ya ✅. Staking tersedia di testnet dan akan hadir di mainnet.", staking_title:"Staking KN", staking_input_label:"Jumlah KN untuk Staking", staking_btn_stake:"Stake", staking_btn_withdraw:"Withdraw", staking_total:"Total Staked", staking_reward:"Reward Tertunda", staking_btn_claim:"Klaim Reward", faucet_title:"Faucet", faucet_desc:"Dapatkan token KN gratis untuk uji coba.", faucet_btn:"Klaim Faucet" },
+  en: { home:"Home", wallet:"Wallet", staking:"Staking", about:"About", contact:"Contact", faq:"FAQ", welcome:"Welcome to KenariCoin", connect:"Connect Wallet", contract:"📜 Contract Address", wallet_balance:"Wallet Balance", about_title:"About KenariCoin", about_desc:"KenariCoin (KN) is a BEP-20 digital asset running on the BNB Smart Chain.", faq_title:"FAQ", faq_q1:"❓ What is KenariCoin?", faq_a1:"KenariCoin (KN) is a BEP-20 token...", faq_q2:"❓ What are advantages?", faq_a2:"🔹 Fast & low-cost transactions\n🔹 Staking & yield farming", faq_q3:"❓ How to get KN?", faq_a3:"Get via faucet (testnet), airdrops, or DEX listing.", faq_q4:"❓ Is staking available?", faq_a4:"Yes. Staking available on testnet.", staking_title:"Stake KN", staking_input_label:"Amount of KN to Stake", staking_btn_stake:"Stake", staking_btn_withdraw:"Withdraw", staking_total:"Total Staked", staking_reward:"Pending Reward", staking_btn_claim:"Claim Reward", faucet_title:"Faucet", faucet_desc:"Get free KN tokens for testing.", faucet_btn:"Claim Faucet" }
 };
 
-// ========================
-// Language Switcher
-// ========================
 function switchLang(lang) {
   localStorage.setItem("lang", lang);
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     if (translations[lang] && translations[lang][key]) {
-      if (key === "about_desc") {
-        el.innerHTML = translations[lang][key];
-      } else {
-        el.textContent = translations[lang][key];
-      }
+      if (key === "about_desc") el.innerHTML = translations[lang][key];
+      else el.textContent = translations[lang][key];
     }
   });
 }
 
-// ========================
-// Load Saved Language
-// ========================
+// -------- Init & Leaderboard sample --------
 document.addEventListener("DOMContentLoaded", () => {
   const savedLang = localStorage.getItem("lang") || "id";
   document.getElementById("langSwitcher").value = savedLang;
   switchLang(savedLang);
+
+  document.getElementById('networkSwitcher').value = 'testnet';
+  switchNetwork('testnet');
+
+  const hash = location.hash?.replace('#','') || 'home'; showPage(hash);
+  document.getElementById('contractAddr').innerText = KN || '';
+  loadLeaderboard(true);
 });
 
-// ========== INIT ==========
-window.addEventListener('DOMContentLoaded', () => {
-  try {
-    document.getElementById('networkSwitcher').value = 'testnet';
-    switchNetwork('testnet');
-    setConnectedState(false);
-
-    // bahasa default
-    const savedLang = localStorage.getItem("lang") || "id";
-    document.getElementById("langSwitcher").value = savedLang;
-    switchLang(savedLang);
-
-    // kalau dropdown berubah -> ganti bahasa
-    document.getElementById("langSwitcher").addEventListener("change", function(){
-      switchLang(this.value);
-    });
-
-    const hash = location.hash?.replace('#','') || 'home';
-    showPage(hash);
-    document.getElementById('contractAddr').innerText = KN || '';
-    console.log('KenariCoin dashboard initialized');
-  } catch(e){
-    console.error('init error', e);
-  }
-});
-
-// ===== LEADERBOARD MOCK / SAMPLE DATA =====
+// -------- Leaderboard mock data --------
 let leaderboardData = [
   {address:"0xA123...111", staked:120000},
   {address:"0xB456...222", staked:95000},
@@ -939,16 +719,13 @@ let leaderboardData = [
   {address:"0xK888...BBB", staked:30000},
 ];
 
-// Load Top 10
 function loadLeaderboard(topOnly = true){
   const tbody = document.getElementById("leaderboardBody");
   if(!tbody) return;
   tbody.innerHTML = "";
-
   let data = [...leaderboardData];
   data.sort((a,b)=>b.staked - a.staked);
   if(topOnly) data = data.slice(0,10);
-
   data.forEach((row,i)=>{
     const tr = document.createElement("tr");
     tr.className = "hover:bg-gray-800 transition";
@@ -960,24 +737,15 @@ function loadLeaderboard(topOnly = true){
     tbody.appendChild(tr);
   });
 }
+function viewAllLeaderboard(){ loadLeaderboard(false); }
 
-function viewAllLeaderboard(){
-  loadLeaderboard(false);
-}
-
-// auto-load leaderboard saat navigate
-document.addEventListener("DOMContentLoaded", ()=> {
-  loadLeaderboard(true);
-});
-
-// register service worker
+// -------- Service Worker (optional) --------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('✅ ServiceWorker registered:', reg))
-      .catch(err => console.log('❌ ServiceWorker failed:', err));
+    navigator.serviceWorker.register('/service-worker.js').then(reg=>console.log('SW registered',reg)).catch(e=>console.log('SW failed',e));
   });
 }
+
 </script>
 </body>
 </html>
